@@ -4,18 +4,39 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/number_formatter.dart';
 
 class GoldCalculatorResultView extends StatelessWidget {
   const GoldCalculatorResultView({super.key});
 
   String _formatCurrency(double value) {
-    final intPart = value.toStringAsFixed(0);
-    final cents = (value % 1 * 100).toStringAsFixed(0).padLeft(2, '0');
-    final formattedInteger = intPart.replaceAllMapped(
+    if (value.isNaN || value.isInfinite) return 'Rp0,00';
+    final isNegative = value < 0;
+    final absVal = value.abs();
+    final str = absVal.toStringAsFixed(8);
+    final parts = str.split('.');
+    final intPart = parts[0].replaceAllMapped(
       RegExp(r'\B(?=(\d{3})+(?!\d))'),
       (match) => '.',
     );
-    return 'Rp$formattedInteger,$cents';
+    final decPart = parts[1].substring(0, 2);
+    final prefix = isNegative ? '-Rp' : 'Rp';
+    return '$prefix$intPart,$decPart';
+  }
+
+  String _formatGram(double value) {
+    if (value.isNaN || value.isInfinite) return '0,00 gram';
+    final isNegative = value < 0;
+    final absVal = value.abs();
+    final str = absVal.toStringAsFixed(8);
+    final parts = str.split('.');
+    final intPart = parts[0].replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (match) => '.',
+    );
+    final decPart = parts[1].substring(0, 2);
+    final prefix = isNegative ? '-' : '';
+    return '$prefix$intPart,$decPart gram';
   }
 
   @override
@@ -30,6 +51,7 @@ class GoldCalculatorResultView extends StatelessWidget {
 
     final hb = (arguments['hb'] as num?)?.toDouble() ?? 0.0;
     final hj = (arguments['hj'] as num?)?.toDouble() ?? 0.0;
+    final modalAwal = (arguments['modalAwal'] as num?)?.toDouble() ?? 0.0;
     final hhb = (arguments['hhb'] as num?)?.toDouble() ?? 0.0;
     final hhj = (arguments['hhj'] as num?)?.toDouble() ?? 0.0;
     final selisih = (arguments['selisih'] as num?)?.toDouble() ?? 0.0;
@@ -87,7 +109,7 @@ class GoldCalculatorResultView extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(color: AppColors.lightGray),
                                 ),
-                                child: Text('\$ ${hb.toStringAsFixed(2)}', style: AppTypography.body),
+                                child: Text('\$ ${formatUsd(hb)}', style: AppTypography.body),
                               ),
                             ],
                           ),
@@ -106,7 +128,7 @@ class GoldCalculatorResultView extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(color: AppColors.lightGray),
                                 ),
-                                child: Text('\$ ${hj.toStringAsFixed(2)}', style: AppTypography.body),
+                                child: Text('\$ ${formatUsd(hj)}', style: AppTypography.body),
                               ),
                             ],
                           ),
@@ -136,13 +158,15 @@ class GoldCalculatorResultView extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
+                    _resultRow('Modal Awal', _formatCurrency(modalAwal)),
+                    _divider(),
                     _resultRow('Hasil Harga Beli (HHB)', _formatCurrency(hhb)),
                     _divider(),
                     _resultRow('Hasil Harga Jual (HHJ)', _formatCurrency(hhj)),
                     _divider(),
                     _resultRow('Selisih Harga', _formatCurrency(selisih)),
                     _divider(),
-                    _resultRow('Estimasi Gram Emas', '${gramEmas.toStringAsFixed(2)} gram'),
+                    _resultRow('Total Gram Emas', _formatGram(gramEmas)),
                   ],
                 ),
               ),
@@ -245,7 +269,6 @@ class GoldCalculatorResultView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
-              _buildBottomNav(context),
             ],
           ),
         ),
@@ -268,45 +291,5 @@ class GoldCalculatorResultView extends StatelessWidget {
 
   Widget _divider() {
     return const Divider(height: 0, color: AppColors.lightGray);
-  }
-
-  Widget _buildBottomNav(BuildContext context) {
-    return Row(
-      children: [
-        _navItem(Icons.trending_up_rounded, 'Gold', true, () {}),
-        _navItem(Icons.grid_3x3_rounded, 'Pivot', false, () => Navigator.of(context).pushNamed(AppRoutes.pivotPoint)),
-        _navItem(Icons.history_rounded, 'History', false, () => Navigator.of(context).pushNamed(AppRoutes.history)),
-        _navItem(Icons.settings_rounded, 'Settings', false, () => Navigator.of(context).pushNamed(AppRoutes.settings)),
-      ],
-    );
-  }
-
-  Widget _navItem(IconData icon, String label, bool isActive, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isActive ? AppColors.primary : AppColors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: isActive ? AppColors.white : AppColors.dark),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: AppTypography.muted.copyWith(
-                  color: isActive ? AppColors.white : AppColors.dark,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

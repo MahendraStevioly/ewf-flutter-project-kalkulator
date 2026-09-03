@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -169,6 +168,9 @@ class _PivotPointViewState extends State<_PivotPointView> {
         TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            UsdNumberInputFormatter(allowFraction: true),
+          ],
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.white,
@@ -518,52 +520,7 @@ class _PivotPointViewState extends State<_PivotPointView> {
               if (viewModel.isManualMode) _buildManualPanel(viewModel) else _buildNewsmakerPanel(viewModel),
               _buildResult(viewModel),
               const SizedBox(height: AppSpacing.xl),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _navButton(label: 'Gold', selected: false, icon: Icons.attach_money_rounded, onTap: () => Navigator.of(context).pushNamed(AppRoutes.goldCalculator)),
-                  _navButton(label: 'Pivot', selected: true, icon: Icons.trending_up_rounded),
-                  _navButton(label: 'History', selected: false, icon: Icons.history_rounded, onTap: () => Navigator.of(context).pushNamed(AppRoutes.history)),
-                  _navButton(label: 'Settings', selected: false, icon: Icons.settings_rounded, onTap: () => Navigator.of(context).pushNamed(AppRoutes.settings)),
-                ],
-              ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _navButton({
-    required String label,
-    required bool selected,
-    required IconData icon,
-    VoidCallback? onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: selected ? AppColors.primary : AppColors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, color: selected ? AppColors.white : AppColors.dark),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: AppTypography.muted.copyWith(
-                    color: selected ? AppColors.white : AppColors.dark,
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),

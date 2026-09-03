@@ -4,6 +4,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/number_formatter.dart';
 import '../viewmodels/gold_calculator_viewmodel.dart';
 
 class GoldCalculatorInputView extends StatefulWidget {
@@ -17,24 +18,44 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
   late GoldCalculatorViewModel viewModel;
   final TextEditingController hbController = TextEditingController(text: '');
   final TextEditingController hjController = TextEditingController(text: '');
-  bool showParameterDetail = false;
+  final TextEditingController modalController = TextEditingController(text: '');
+  final TextEditingController kursController = TextEditingController(text: '18000');
+  bool showParameterDetail = true;
+  bool isFetchingRate = false;
 
   @override
   void initState() {
     super.initState();
     viewModel = GoldCalculatorViewModel();
+    _loadLiveRate();
+  }
+
+  Future<void> _loadLiveRate() async {
+    if (!mounted) return;
+    setState(() => isFetchingRate = true);
+    final rate = await viewModel.fetchLiveExchangeRate();
+    if (mounted) {
+      if (rate != null && rate > 0) {
+        kursController.text = formatNumber(rate, decimals: 0);
+      }
+      setState(() => isFetchingRate = false);
+    }
   }
 
   @override
   void dispose() {
     hbController.dispose();
     hjController.dispose();
+    modalController.dispose();
+    kursController.dispose();
     super.dispose();
   }
 
   void _handleCalculate() {
     viewModel.hargaBeli = hbController.text;
     viewModel.hargaJual = hjController.text;
+    viewModel.modalAwalInput = modalController.text;
+    viewModel.kursUsdIdrInput = kursController.text;
     viewModel.calculate();
 
     if (viewModel.errorMessage != null) {
@@ -73,7 +94,7 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
               ),
               const SizedBox(height: AppSpacing.sm),
               const Text(
-                'Simulasi perhitungan keuntungan investasi emas fisik berdasarkan harga pasar terkini.',
+                'Perhitungan keuntungan investasi emas fisik berdasarkan harga pasar terkini.',
                 style: AppTypography.body,
               ),
               const SizedBox(height: AppSpacing.xxl),
@@ -84,6 +105,9 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
               TextField(
                 controller: hbController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  UsdNumberInputFormatter(allowFraction: true),
+                ],
                 decoration: InputDecoration(
                   prefix: const Text('\$ ', style: AppTypography.body),
                   hintText: '0.00',
@@ -111,6 +135,9 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
               TextField(
                 controller: hjController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  UsdNumberInputFormatter(allowFraction: true),
+                ],
                 decoration: InputDecoration(
                   prefix: const Text('\$ ', style: AppTypography.body),
                   hintText: '0.00',
@@ -128,6 +155,36 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
               const SizedBox(height: AppSpacing.sm),
               const Text(
                 'Harga per troy ounce dalam USD',
+                style: AppTypography.muted,
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              
+              // Modal Awal
+              Text('Modal Awal (IDR)', style: AppTypography.sectionTitle),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                controller: modalController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  IndonesianNumberInputFormatter(allowFraction: false),
+                ],
+                decoration: InputDecoration(
+                  prefix: const Text('Rp ', style: AppTypography.body),
+                  hintText: '0',
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.lightGray),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.lightGray),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const Text(
+                'Total dana modal investasi dalam Rupiah',
                 style: AppTypography.muted,
               ),
               const SizedBox(height: AppSpacing.xxl),
@@ -155,7 +212,7 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                           GestureDetector(
                             onTap: () => setState(() => showParameterDetail = !showParameterDetail),
                             child: Text(
-                              'Edit Default',
+                              showParameterDetail ? 'Sembunyikan' : 'Edit Kurs',
                               style: AppTypography.body.copyWith(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w700,
@@ -172,11 +229,89 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _parameterField('MODAL AWAL', 'Rp${viewModel.modalAwal.toStringAsFixed(0)}'),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text('KURS USD/IDR', style: AppTypography.label),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.positive.withAlpha(30),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: const BoxDecoration(
+                                              color: AppColors.positive,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'LIVE',
+                                            style: AppTypography.muted.copyWith(
+                                              color: AppColors.positive,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (isFetchingRate)
+                                  const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                else
+                                  GestureDetector(
+                                    onTap: _loadLiveRate,
+                                    child: const Icon(Icons.refresh_rounded, size: 18, color: AppColors.primary),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: kursController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: [
+                                IndonesianNumberInputFormatter(allowFraction: true),
+                              ],
+                              decoration: InputDecoration(
+                                prefix: const Text('Rp ', style: AppTypography.body),
+                                hintText: viewModel.liveRate != null
+                                    ? formatNumber(viewModel.liveRate!, decimals: 0)
+                                    : '18.000',
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(color: AppColors.lightGray),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(color: AppColors.lightGray),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              viewModel.liveRate != null
+                                  ? 'Kurs live pasar terkini: Rp ${viewModel.formatCurrency(viewModel.liveRate!).replaceFirst('Rp', '')} (dapat disesuaikan)'
+                                  : 'Kurs USD ke IDR (dapat disesuaikan)',
+                              style: AppTypography.muted,
+                            ),
                             const SizedBox(height: AppSpacing.md),
-                            _parameterField('KURS USD/IDR', 'Rp${viewModel.kursUsdIdr.toStringAsFixed(0)}'),
-                            const SizedBox(height: AppSpacing.md),
-                            _parameterField('KONVERSI TOZ (G)', viewModel.konversiTozG.toStringAsFixed(1)),
+                            _parameterField('KONVERSI TOZ (G)', '${viewModel.konversiTozG.toStringAsFixed(1)} gram'),
                           ],
                         ),
                       ),
@@ -226,9 +361,6 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
-              
-              // Bottom Navigation
-              _buildBottomNav(context),
             ],
           ),
         ),
@@ -243,54 +375,16 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
         Text(label, style: AppTypography.label),
         const SizedBox(height: 4),
         Container(
+          width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.lightGray),
           ),
           child: Text(value, style: AppTypography.body),
         ),
       ],
-    );
-  }
-
-  Widget _buildBottomNav(BuildContext context) {
-    return Row(
-      children: [
-        _navItem(Icons.trending_up_rounded, 'Gold', true, () {}),
-        _navItem(Icons.grid_3x3_rounded, 'Pivot', false, () => Navigator.of(context).pushNamed(AppRoutes.pivotPoint)),
-        _navItem(Icons.history_rounded, 'History', false, () => Navigator.of(context).pushNamed(AppRoutes.history)),
-        _navItem(Icons.settings_rounded, 'Settings', false, () => Navigator.of(context).pushNamed(AppRoutes.settings)),
-      ],
-    );
-  }
-
-  Widget _navItem(IconData icon, String label, bool isActive, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isActive ? AppColors.primary : AppColors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: isActive ? AppColors.white : AppColors.dark),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: AppTypography.muted.copyWith(
-                  color: isActive ? AppColors.white : AppColors.dark,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

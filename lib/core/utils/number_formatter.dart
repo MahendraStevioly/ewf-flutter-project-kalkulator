@@ -1,21 +1,66 @@
-/// Parse angka format Indonesia (4.150,50 → 4150.50)
+import 'package:flutter/services.dart';
+
+/// Parse angka format Indonesia maupun USD (2,700.50 → 2700.50 atau 4.150,50 → 4150.50)
 double parseDecimal(String value) {
-  final normalized = value
-      .replaceAll('.', '')
-      .replaceAll(',', '.')
-      .replaceAll(RegExp(r'[^0-9.]'), '');
-  return double.tryParse(normalized) ?? 0;
+  if (value.trim().isEmpty) return 0;
+  String cleaned = value.replaceAll('Rp', '').replaceAll('\$', '').replaceAll(' ', '').trim();
+  if (cleaned.isEmpty) return 0;
+
+  if (cleaned.contains(',') && cleaned.contains('.')) {
+    final lastComma = cleaned.lastIndexOf(',');
+    final lastDot = cleaned.lastIndexOf('.');
+    if (lastDot > lastComma) {
+      cleaned = cleaned.replaceAll(',', '');
+    } else {
+      cleaned = cleaned.replaceAll('.', '').replaceAll(',', '.');
+    }
+  } else if (cleaned.contains(',')) {
+    final parts = cleaned.split(',');
+    if (parts.length > 2 || (parts.length == 2 && parts[1].length == 3)) {
+      cleaned = cleaned.replaceAll(',', '');
+    } else {
+      cleaned = cleaned.replaceAll(',', '.');
+    }
+  } else if (cleaned.contains('.')) {
+    final parts = cleaned.split('.');
+    if (parts.length > 2 || (parts.length == 2 && parts[1].length == 3)) {
+      cleaned = cleaned.replaceAll('.', '');
+    }
+  }
+
+  return double.tryParse(cleaned) ?? 0;
 }
 
-/// Format angka ke format Indonesia dengan pemisah ribuan
+/// Format angka ke format Indonesia (IDR): pemisah ribuan titik (.), desimal koma (,)
 String formatNumber(double value, {int decimals = 2}) {
-  final fixed = value.toStringAsFixed(decimals);
-  final parts = fixed.split('.');
+  if (value.isNaN || value.isInfinite) return '0';
+  final isNegative = value < 0;
+  final absVal = value.abs();
+  final str = absVal.toStringAsFixed(8);
+  final parts = str.split('.');
   final integerPart = parts[0].replaceAllMapped(
     RegExp(r'\B(?=(\d{3})+(?!\d))'),
     (match) => '.',
   );
-  return '$integerPart,${parts[1]}';
+  final decPart = decimals > 0 ? parts[1].substring(0, decimals.clamp(0, parts[1].length)) : '';
+  final prefix = isNegative ? '-' : '';
+  return decimals > 0 ? '$prefix$integerPart,$decPart' : '$prefix$integerPart';
+}
+
+/// Format angka ke format USD: pemisah ribuan koma (,), desimal titik (.)
+String formatUsd(double value, {int decimals = 2}) {
+  if (value.isNaN || value.isInfinite) return '0.00';
+  final isNegative = value < 0;
+  final absVal = value.abs();
+  final str = absVal.toStringAsFixed(8);
+  final parts = str.split('.');
+  final integerPart = parts[0].replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (match) => ',',
+  );
+  final decPart = decimals > 0 ? parts[1].substring(0, decimals.clamp(0, parts[1].length)) : '';
+  final prefix = isNegative ? '-' : '';
+  return decimals > 0 ? '$prefix$integerPart.$decPart' : '$prefix$integerPart';
 }
 
 /// Terjemahkan rekomendasi pivot ke Bahasa Indonesia
@@ -27,5 +72,182 @@ String formatRecommendation(String recommendation) {
       return 'JUAL';
     default:
       return 'NETRAL';
+  }
+}
+
+/// Formatter input angka IDR real-time: pemisah ribuan titik (.), pemisah desimal koma (,)
+class IndonesianNumberInputFormatter extends TextInputFormatter {
+  final bool allowFraction;
+  final int maxFractionDigits;
+
+  IndonesianNumberInputFormatter({
+    this.allowFraction = true,
+    this.maxFractionDigits = 2,
+  });
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    String text = newValue.text;
+
+    if (allowFraction && text.contains('.') && !text.contains(',')) {
+      final lastDotIndex = text.lastIndexOf('.');
+      final afterDot = text.substring(lastDotIndex + 1);
+      if (afterDot.length <= maxFractionDigits) {
+        final beforeDot = text.substring(0, lastDotIndex).replaceAll('.', '');
+        if (RegExp(r'^\d+$').hasMatch(beforeDot)) {
+          text = '$beforeDot,$afterDot';
+        }
+      }
+    }
+
+    String integerPart = text;
+    String fractionPart = '';
+    bool hasComma = text.contains(',');
+
+    if (hasComma) {
+      final parts = text.split(',');
+      integerPart = parts[0];
+      fractionPart = parts.sublist(1).join('');
+      if (fractionPart.length > maxFractionDigits) {
+        fractionPart = fractionPart.substring(0, maxFractionDigits);
+      }
+    }
+
+    String digitsOnly = integerPart.replaceAll(RegExp(r'[^\d]'), '');
+    if (digitsOnly.isEmpty && !hasComma) {
+      return const TextEditingValue(text: '');
+    }
+
+    String formattedInteger = digitsOnly.replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (match) => '.',
+    );
+
+    String formattedText = formattedInteger;
+    if (hasComma) {
+      formattedText += ',$fractionPart';
+    }
+
+    int cursorDigitCount = 0;
+    for (int i = 0; i < newValue.selection.end && i < newValue.text.length; i++) {
+      if (RegExp(r'[\d,]').hasMatch(newValue.text[i])) {
+        cursorDigitCount++;
+      }
+    }
+
+    int newSelectionIndex = formattedText.length;
+    int currentCount = 0;
+    for (int i = 0; i < formattedText.length; i++) {
+      if (RegExp(r'[\d,]').hasMatch(formattedText[i])) {
+        currentCount++;
+      }
+      if (currentCount >= cursorDigitCount) {
+        newSelectionIndex = i + 1;
+        break;
+      }
+    }
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(
+        offset: newSelectionIndex.clamp(0, formattedText.length),
+      ),
+    );
+  }
+}
+
+/// Formatter input angka USD real-time: pemisah ribuan koma (,), pemisah desimal titik (.)
+class UsdNumberInputFormatter extends TextInputFormatter {
+  final bool allowFraction;
+  final int maxFractionDigits;
+
+  UsdNumberInputFormatter({
+    this.allowFraction = true,
+    this.maxFractionDigits = 2,
+  });
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    String text = newValue.text;
+
+    // Ubah koma desimal menjadi titik jika diketik di posisi desimal
+    if (allowFraction && text.contains(',') && !text.contains('.')) {
+      final lastCommaIndex = text.lastIndexOf(',');
+      final afterComma = text.substring(lastCommaIndex + 1);
+      if (afterComma.length <= maxFractionDigits) {
+        final beforeComma = text.substring(0, lastCommaIndex).replaceAll(',', '');
+        if (RegExp(r'^\d+$').hasMatch(beforeComma)) {
+          text = '$beforeComma.$afterComma';
+        }
+      }
+    }
+
+    String integerPart = text;
+    String fractionPart = '';
+    bool hasDot = text.contains('.');
+
+    if (hasDot) {
+      final parts = text.split('.');
+      integerPart = parts[0];
+      fractionPart = parts.sublist(1).join('');
+      if (fractionPart.length > maxFractionDigits) {
+        fractionPart = fractionPart.substring(0, maxFractionDigits);
+      }
+    }
+
+    String digitsOnly = integerPart.replaceAll(RegExp(r'[^\d]'), '');
+    if (digitsOnly.isEmpty && !hasDot) {
+      return const TextEditingValue(text: '');
+    }
+
+    String formattedInteger = digitsOnly.replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (match) => ',',
+    );
+
+    String formattedText = formattedInteger;
+    if (hasDot) {
+      formattedText += '.$fractionPart';
+    }
+
+    int cursorDigitCount = 0;
+    for (int i = 0; i < newValue.selection.end && i < newValue.text.length; i++) {
+      if (RegExp(r'[\d\.]').hasMatch(newValue.text[i])) {
+        cursorDigitCount++;
+      }
+    }
+
+    int newSelectionIndex = formattedText.length;
+    int currentCount = 0;
+    for (int i = 0; i < formattedText.length; i++) {
+      if (RegExp(r'[\d\.]').hasMatch(formattedText[i])) {
+        currentCount++;
+      }
+      if (currentCount >= cursorDigitCount) {
+        newSelectionIndex = i + 1;
+        break;
+      }
+    }
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(
+        offset: newSelectionIndex.clamp(0, formattedText.length),
+      ),
+    );
   }
 }
