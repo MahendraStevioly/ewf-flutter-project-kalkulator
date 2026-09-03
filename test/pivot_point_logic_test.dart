@@ -1,12 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kalkulator_pivot/features/pivot_point/data/repositories/pivot_point_repository_impl.dart';
+import 'package:kalkulator_pivot/features/pivot_point/domain/usecases/calculate_pivot_point.dart';
 
 void main() {
-  group('PivotPointRepositoryImpl', () {
-    test('calculates pivot values correctly', () {
-      const repository = PivotPointRepositoryImpl();
+  group('CalculatePivotPoint', () {
+    late CalculatePivotPoint useCase;
 
-      final result = repository.calculate(
+    setUp(() {
+      useCase = CalculatePivotPoint(PivotPointRepositoryImpl());
+    });
+
+    test('calculates pivot values correctly', () {
+      final result = useCase.call(
         high: 4150,
         low: 4100,
         close: 4130,
@@ -27,9 +32,7 @@ void main() {
     });
 
     test('returns SELL when PP is below OP', () {
-      const repository = PivotPointRepositoryImpl();
-
-      final result = repository.calculate(
+      final result = useCase.call(
         high: 4100,
         low: 4000,
         close: 4050,
@@ -40,9 +43,7 @@ void main() {
     });
 
     test('returns NEUTRAL when PP is equal to OP', () {
-      const repository = PivotPointRepositoryImpl();
-
-      final result = repository.calculate(
+      final result = useCase.call(
         high: 4150,
         low: 4100,
         close: 4125,

@@ -3,11 +3,9 @@ import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart';
 
 class ScrapingService {
-  
-  // 1. Fungsi sekarang meminta parameter 'targetUrl' saat dipanggil
+  /// Fungsi meminta parameter 'targetUrl' saat dipanggil
   Future<Map<String, dynamic>> fetchHistoricalPrices(String targetUrl) async {
     try {
-      // 2. Gunakan targetUrl yang dikirimkan, bukan URL permanen
       final response = await http.get(Uri.parse(targetUrl));
 
       if (response.statusCode == 200) {

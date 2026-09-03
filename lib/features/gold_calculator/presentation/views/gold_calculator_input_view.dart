@@ -4,7 +4,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../viewmodels/gold_calculator_viewmodel.dart';
+import '../viewmodels/gold_calculator_viewmodel.dart';
 
 class GoldCalculatorInputView extends StatefulWidget {
   const GoldCalculatorInputView({super.key});

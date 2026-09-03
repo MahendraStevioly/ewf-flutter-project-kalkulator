@@ -1,22 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../viewmodels/pivot_point_viewmodel.dart';
+import '../../../../core/utils/number_formatter.dart';
+import '../viewmodels/pivot_point_viewmodel.dart';
 
-class PivotPointScreen extends StatefulWidget {
+class PivotPointScreen extends StatelessWidget {
   const PivotPointScreen({super.key});
 
   @override
-  State<PivotPointScreen> createState() => _PivotPointScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => PivotPointViewModel(),
+      child: const _PivotPointView(),
+    );
+  }
 }
 
-class _PivotPointScreenState extends State<PivotPointScreen> {
-  late PivotPointViewModel viewModel;
-  bool isManualMode = true;
+class _PivotPointView extends StatefulWidget {
+  const _PivotPointView();
 
+  @override
+  State<_PivotPointView> createState() => _PivotPointViewState();
+}
+
+class _PivotPointViewState extends State<_PivotPointView> {
   final TextEditingController highController = TextEditingController(text: '4,150');
   final TextEditingController lowController = TextEditingController(text: '4,100');
   final TextEditingController closeController = TextEditingController(text: '4,130');
@@ -27,12 +38,6 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
   final TextEditingController marketHighController = TextEditingController(text: '4,138.00');
   final TextEditingController marketLowController = TextEditingController(text: '4,128.00');
   final TextEditingController marketCloseController = TextEditingController(text: '4,134.00');
-
-  @override
-  void initState() {
-    super.initState();
-    viewModel = PivotPointViewModel();
-  }
 
   @override
   void dispose() {
@@ -48,24 +53,6 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
     super.dispose();
   }
 
-  double _parseDecimal(String value) {
-    final normalized = value
-        .replaceAll('.', '')
-        .replaceAll(',', '.')
-        .replaceAll(RegExp(r'[^0-9.]'), '');
-    return double.tryParse(normalized) ?? 0;
-  }
-
-  String _formatNumber(double value, {int decimals = 2}) {
-    final fixed = value.toStringAsFixed(decimals);
-    final parts = fixed.split('.');
-    final integerPart = parts[0].replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'),
-      (match) => '.',
-    );
-    return '$integerPart,${parts[1]}';
-  }
-
   Color _recommendationColor(String recommendation) {
     switch (recommendation) {
       case 'BUY':
@@ -77,44 +64,46 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
     }
   }
 
-  void _calculateManual() {
-    viewModel.setManualParams(
-      _parseDecimal(highController.text),
-      _parseDecimal(lowController.text),
-      _parseDecimal(closeController.text),
-      _parseDecimal(opController.text),
+  Future<void> _calculateManual(PivotPointViewModel viewModel) async {
+    await viewModel.calculateManual(
+      high: parseDecimal(highController.text),
+      low: parseDecimal(lowController.text),
+      close: parseDecimal(closeController.text),
+      openingPrice: parseDecimal(opController.text),
     );
-    viewModel.calculateManual();
+
+    if (!mounted) {
+      return;
+    }
 
     if (viewModel.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(viewModel.errorMessage!)),
       );
-    } else {
-      setState(() {});
     }
   }
 
-  void _calculateFromMarket() {
-    viewModel.setNewsmakerParams(
-      symbolController.text,
-      _parseDecimal(openController.text),
-      _parseDecimal(marketHighController.text),
-      _parseDecimal(marketLowController.text),
-      _parseDecimal(marketCloseController.text),
+  Future<void> _calculateFromMarket(PivotPointViewModel viewModel) async {
+    await viewModel.calculateNewsmaker(
+      symbolInput: symbolController.text,
+      open: parseDecimal(openController.text),
+      high: parseDecimal(marketHighController.text),
+      low: parseDecimal(marketLowController.text),
+      close: parseDecimal(marketCloseController.text),
     );
-    viewModel.calculateNewsmaker();
+
+    if (!mounted) {
+      return;
+    }
 
     if (viewModel.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(viewModel.errorMessage!)),
       );
-    } else {
-      setState(() {});
     }
   }
 
-  Widget _buildSwitch() {
+  Widget _buildSwitch(PivotPointViewModel viewModel) {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -125,18 +114,18 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => isManualMode = true),
+              onTap: () => viewModel.setManualMode(true),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: isManualMode ? AppColors.white : Colors.transparent,
+                  color: viewModel.isManualMode ? AppColors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
                   child: Text(
                     'Manual',
                     style: AppTypography.body.copyWith(
-                      fontWeight: isManualMode ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: viewModel.isManualMode ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -145,18 +134,18 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => isManualMode = false),
+              onTap: () => viewModel.setManualMode(false),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: !isManualMode ? AppColors.white : Colors.transparent,
+                  color: !viewModel.isManualMode ? AppColors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
                   child: Text(
                     'Newsmaker',
                     style: AppTypography.body.copyWith(
-                      fontWeight: !isManualMode ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: !viewModel.isManualMode ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -202,7 +191,7 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
     );
   }
 
-  Widget _buildManualPanel() {
+  Widget _buildManualPanel(PivotPointViewModel viewModel) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -224,7 +213,7 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: _calculateManual,
+              onPressed: viewModel.isLoading ? null : () => _calculateManual(viewModel),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.white,
@@ -232,7 +221,16 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Text('HITUNG PIVOT'),
+              child: viewModel.isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.white,
+                      ),
+                    )
+                  : const Text('HITUNG PIVOT'),
             ),
           ),
         ],
@@ -240,7 +238,7 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
     );
   }
 
-  Widget _buildNewsmakerPanel() {
+  Widget _buildNewsmakerPanel(PivotPointViewModel viewModel) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -275,7 +273,10 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Updated:', style: AppTypography.body),
-              Text(viewModel.lastUpdated.isEmpty ? '14:32:15' : viewModel.lastUpdated, style: AppTypography.body),
+              Text(
+                viewModel.lastUpdated.isEmpty ? '14:32:15' : viewModel.lastUpdated,
+                style: AppTypography.body,
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -313,7 +314,7 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: _calculateFromMarket,
+              onPressed: viewModel.isLoading ? null : () => _calculateFromMarket(viewModel),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.white,
@@ -321,7 +322,16 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Text('HITUNG PIVOT'),
+              child: viewModel.isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.white,
+                      ),
+                    )
+                  : const Text('HITUNG PIVOT'),
             ),
           ),
         ],
@@ -329,16 +339,14 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
     );
   }
 
-  Widget _buildResult() {
-    final data = viewModel.hasil;
+  Widget _buildResult(PivotPointViewModel viewModel) {
+    final data = viewModel.result;
 
     if (data == null) {
       return const SizedBox.shrink();
     }
 
-    final recommendation = data['recommendation'] as String;
-    final pp = data['pp'] as double;
-    final range = data['range'] as double;
+    final recommendation = data.recommendation;
 
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.xl),
@@ -364,7 +372,7 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    viewModel.formatRecommendation(recommendation),
+                    formatRecommendation(recommendation),
                     style: AppTypography.title.copyWith(
                       color: _recommendationColor(recommendation),
                       letterSpacing: 1,
@@ -384,17 +392,13 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
             ),
             child: Column(
               children: [
-                _resultStat(label: 'TITIK PIVOT (PP)', value: _formatNumber(pp)),
+                _resultStat(label: 'TITIK PIVOT (PP)', value: formatNumber(data.pp)),
                 const Divider(),
-                _resultStat(label: 'RENTANG HARIAN', value: _formatNumber(range, decimals: 2)),
+                _resultStat(label: 'RENTANG HARIAN', value: formatNumber(data.range, decimals: 2)),
                 const Divider(),
                 _resultStat(
                   label: 'HARGA PEMBUKAAN (OP)',
-                  value: _formatNumber(
-                    isManualMode 
-                      ? _parseDecimal(opController.text)
-                      : _parseDecimal(openController.text),
-                  ),
+                  value: formatNumber(data.openingPrice),
                 ),
               ],
             ),
@@ -411,15 +415,15 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
             ),
             child: Column(
               children: [
-                _marketLevelRow(label: 'R4', value: data['r4'] as double, color: AppColors.negative),
-                _marketLevelRow(label: 'R3', value: data['r3'] as double, color: AppColors.negative),
-                _marketLevelRow(label: 'R2', value: data['r2'] as double, color: AppColors.negative),
-                _marketLevelRow(label: 'R1', value: data['r1'] as double, color: AppColors.negative),
-                _marketLevelRow(label: 'PIVOT', value: data['pp'] as double, color: AppColors.dark, isPivot: true),
-                _marketLevelRow(label: 'S1', value: data['s1'] as double, color: AppColors.positive),
-                _marketLevelRow(label: 'S2', value: data['s2'] as double, color: AppColors.positive),
-                _marketLevelRow(label: 'S3', value: data['s3'] as double, color: AppColors.positive),
-                _marketLevelRow(label: 'S4', value: data['s4'] as double, color: AppColors.positive),
+                _marketLevelRow(label: 'R4', value: data.r4, color: AppColors.negative),
+                _marketLevelRow(label: 'R3', value: data.r3, color: AppColors.negative),
+                _marketLevelRow(label: 'R2', value: data.r2, color: AppColors.negative),
+                _marketLevelRow(label: 'R1', value: data.r1, color: AppColors.negative),
+                _marketLevelRow(label: 'PIVOT', value: data.pp, color: AppColors.dark, isPivot: true),
+                _marketLevelRow(label: 'S1', value: data.s1, color: AppColors.positive),
+                _marketLevelRow(label: 'S2', value: data.s2, color: AppColors.positive),
+                _marketLevelRow(label: 'S3', value: data.s3, color: AppColors.positive),
+                _marketLevelRow(label: 'S4', value: data.s4, color: AppColors.positive),
               ],
             ),
           ),
@@ -464,7 +468,7 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              _formatNumber(value),
+              formatNumber(value),
               style: AppTypography.body.copyWith(
                 color: color,
                 fontWeight: FontWeight.w700,
@@ -478,6 +482,8 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = context.watch<PivotPointViewModel>();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -507,10 +513,10 @@ class _PivotPointScreenState extends State<PivotPointScreen> {
                 style: AppTypography.body,
               ),
               const SizedBox(height: AppSpacing.xl),
-              _buildSwitch(),
+              _buildSwitch(viewModel),
               const SizedBox(height: AppSpacing.xl),
-              if (isManualMode) _buildManualPanel() else _buildNewsmakerPanel(),
-              _buildResult(),
+              if (viewModel.isManualMode) _buildManualPanel(viewModel) else _buildNewsmakerPanel(viewModel),
+              _buildResult(viewModel),
               const SizedBox(height: AppSpacing.xl),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
