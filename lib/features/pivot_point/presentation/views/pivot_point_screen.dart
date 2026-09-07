@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/services/history_service.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/number_formatter.dart';
 import '../viewmodels/pivot_point_viewmodel.dart';
 
@@ -26,17 +25,31 @@ class _PivotPointView extends StatefulWidget {
   State<_PivotPointView> createState() => _PivotPointViewState();
 }
 
-class _PivotPointViewState extends State<_PivotPointView> {
-  final TextEditingController highController = TextEditingController(text: '4,150');
-  final TextEditingController lowController = TextEditingController(text: '4,100');
-  final TextEditingController closeController = TextEditingController(text: '4,130');
-  final TextEditingController opController = TextEditingController(text: '4,120');
+class _PivotPointViewState extends State<_PivotPointView>
+    with SingleTickerProviderStateMixin {
+  final TextEditingController highController = TextEditingController(text: '4,145');
+  final TextEditingController lowController = TextEditingController(text: '4,110');
+  final TextEditingController closeController = TextEditingController(text: '4,132');
+  final TextEditingController opController = TextEditingController(text: '4,118');
 
-  final TextEditingController symbolController = TextEditingController(text: 'XAU/USD');
-  final TextEditingController openController = TextEditingController(text: '4,132.00');
-  final TextEditingController marketHighController = TextEditingController(text: '4,138.00');
-  final TextEditingController marketLowController = TextEditingController(text: '4,128.00');
-  final TextEditingController marketCloseController = TextEditingController(text: '4,134.00');
+  // Newsmaker tab controllers
+  final TextEditingController nmHighController = TextEditingController(text: '4,138.00');
+  final TextEditingController nmLowController = TextEditingController(text: '4,128.00');
+  final TextEditingController nmCloseController = TextEditingController(text: '4,134.00');
+  final TextEditingController nmOpenController = TextEditingController(text: '4,132.00');
+
+  late TabController _tabController;
+  bool _isManual = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) return;
+      setState(() => _isManual = _tabController.index == 0);
+    });
+  }
 
   @override
   void dispose() {
@@ -44,440 +57,78 @@ class _PivotPointViewState extends State<_PivotPointView> {
     lowController.dispose();
     closeController.dispose();
     opController.dispose();
-    symbolController.dispose();
-    openController.dispose();
-    marketHighController.dispose();
-    marketLowController.dispose();
-    marketCloseController.dispose();
+    nmHighController.dispose();
+    nmLowController.dispose();
+    nmCloseController.dispose();
+    nmOpenController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
-  Color _recommendationColor(String recommendation) {
-    switch (recommendation) {
-      case 'BUY':
-        return AppColors.positive;
-      case 'SELL':
-        return AppColors.negative;
-      default:
-        return AppColors.gray;
-    }
+  Color _signalColor(String rec) {
+    if (rec == 'BUY') return const Color(0xFF16A34A);
+    if (rec == 'SELL') return const Color(0xFFDC2626);
+    return const Color(0xFF64748B);
   }
 
-  Future<void> _calculateManual(PivotPointViewModel viewModel) async {
-    await viewModel.calculateManual(
-      high: parseDecimal(highController.text),
-      low: parseDecimal(lowController.text),
-      close: parseDecimal(closeController.text),
-      openingPrice: parseDecimal(opController.text),
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    if (viewModel.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(viewModel.errorMessage!)),
+  Future<void> _calculate(PivotPointViewModel viewModel) async {
+    if (_isManual) {
+      await viewModel.calculateManual(
+        high: parseDecimal(highController.text),
+        low: parseDecimal(lowController.text),
+        close: parseDecimal(closeController.text),
+        openingPrice: parseDecimal(opController.text),
+      );
+    } else {
+      await viewModel.calculateNewsmaker(
+        symbolInput: 'XAU/USD',
+        open: parseDecimal(nmOpenController.text),
+        high: parseDecimal(nmHighController.text),
+        low: parseDecimal(nmLowController.text),
+        close: parseDecimal(nmCloseController.text),
       );
     }
-  }
 
-  Future<void> _calculateFromMarket(PivotPointViewModel viewModel) async {
-    await viewModel.calculateNewsmaker(
-      symbolInput: symbolController.text,
-      open: parseDecimal(openController.text),
-      high: parseDecimal(marketHighController.text),
-      low: parseDecimal(marketLowController.text),
-      close: parseDecimal(marketCloseController.text),
-    );
-
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     if (viewModel.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(viewModel.errorMessage!)),
-      );
-    }
-  }
-
-  Widget _buildSwitch(PivotPointViewModel viewModel) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.lightGray,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => viewModel.setManualMode(true),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: viewModel.isManualMode ? AppColors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Text(
-                    'Manual',
-                    style: AppTypography.body.copyWith(
-                      fontWeight: viewModel.isManualMode ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => viewModel.setManualMode(false),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: !viewModel.isManualMode ? AppColors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Text(
-                    'Newsmaker',
-                    style: AppTypography.body.copyWith(
-                      fontWeight: !viewModel.isManualMode ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInputField({
-    required TextEditingController controller,
-    required String label,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: AppTypography.body),
-        const SizedBox(height: AppSpacing.sm),
-        TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            UsdNumberInputFormatter(allowFraction: true),
-          ],
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.lightGray),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.lightGray),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          ),
+        SnackBar(
+          content: Text(viewModel.errorMessage!),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.negative,
         ),
-      ],
-    );
-  }
-
-  Widget _buildManualPanel(PivotPointViewModel viewModel) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.lightGray),
-      ),
-      child: Column(
-        children: [
-          _buildInputField(controller: highController, label: 'High (Harga tertinggi)'),
-          const SizedBox(height: AppSpacing.md),
-          _buildInputField(controller: lowController, label: 'Low (Harga terendah)'),
-          const SizedBox(height: AppSpacing.md),
-          _buildInputField(controller: closeController, label: 'Close (Harga penutupan)'),
-          const SizedBox(height: AppSpacing.md),
-          _buildInputField(controller: opController, label: 'OP (Harga pembukaan)'),
-          const SizedBox(height: AppSpacing.xl),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: viewModel.isLoading ? null : () => _calculateManual(viewModel),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: viewModel.isLoading
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.white,
-                      ),
-                    )
-                  : const Text('HITUNG PIVOT'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNewsmakerPanel(PivotPointViewModel viewModel) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.lightGray),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Data Source: Newsmaker', style: AppTypography.body),
-              Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      color: AppColors.positive,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text('Connected', style: AppTypography.body),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Updated:', style: AppTypography.body),
-              Text(
-                viewModel.lastUpdated.isEmpty ? '14:32:15' : viewModel.lastUpdated,
-                style: AppTypography.body,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Symbol', style: AppTypography.body),
-                const SizedBox(height: AppSpacing.sm),
-                TextField(
-                  controller: symbolController,
-                  decoration: InputDecoration(
-                    hintText: 'XAU/USD',
-                    suffixIcon: const Icon(Icons.edit_outlined),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _buildInputField(controller: openController, label: 'Open'),
-                const SizedBox(height: AppSpacing.md),
-                _buildInputField(controller: marketHighController, label: 'High'),
-                const SizedBox(height: AppSpacing.md),
-                _buildInputField(controller: marketLowController, label: 'Low'),
-                const SizedBox(height: AppSpacing.md),
-                _buildInputField(controller: marketCloseController, label: 'Close'),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: viewModel.isLoading ? null : () => _calculateFromMarket(viewModel),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: viewModel.isLoading
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.white,
-                      ),
-                    )
-                  : const Text('HITUNG PIVOT'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResult(PivotPointViewModel viewModel) {
-    final data = viewModel.result;
-
-    if (data == null) {
-      return const SizedBox.shrink();
+      );
     }
-
-    final recommendation = data.recommendation;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.xl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.lightGray),
-            ),
-            child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    recommendation == 'BUY' ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                    color: _recommendationColor(recommendation),
-                    size: 26,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    formatRecommendation(recommendation),
-                    style: AppTypography.title.copyWith(
-                      color: _recommendationColor(recommendation),
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.lightGray),
-            ),
-            child: Column(
-              children: [
-                _resultStat(label: 'TITIK PIVOT (PP)', value: formatNumber(data.pp)),
-                const Divider(),
-                _resultStat(label: 'RENTANG HARIAN', value: formatNumber(data.range, decimals: 2)),
-                const Divider(),
-                _resultStat(
-                  label: 'HARGA PEMBUKAAN (OP)',
-                  value: formatNumber(data.openingPrice),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const Text('Market Level Visualization', style: AppTypography.sectionTitle),
-          const SizedBox(height: AppSpacing.md),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.lightGray),
-            ),
-            child: Column(
-              children: [
-                _marketLevelRow(label: 'R4', value: data.r4, color: AppColors.negative),
-                _marketLevelRow(label: 'R3', value: data.r3, color: AppColors.negative),
-                _marketLevelRow(label: 'R2', value: data.r2, color: AppColors.negative),
-                _marketLevelRow(label: 'R1', value: data.r1, color: AppColors.negative),
-                _marketLevelRow(label: 'PIVOT', value: data.pp, color: AppColors.dark, isPivot: true),
-                _marketLevelRow(label: 'S1', value: data.s1, color: AppColors.positive),
-                _marketLevelRow(label: 'S2', value: data.s2, color: AppColors.positive),
-                _marketLevelRow(label: 'S3', value: data.s3, color: AppColors.positive),
-                _marketLevelRow(label: 'S4', value: data.s4, color: AppColors.positive),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
-  Widget _resultStat({required String label, required String value}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w700)),
-        Text(value, style: AppTypography.title.copyWith(fontSize: 18)),
-      ],
+  void _saveToHistory(PivotPointViewModel viewModel) {
+    final data = viewModel.result;
+    if (data == null) return;
+    final entry = PivotHistoryEntry(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      timestamp: DateTime.now(),
+      high: data.high,
+      low: data.low,
+      close: data.close,
+      openingPrice: data.openingPrice,
+      pp: data.pp,
+      range: data.range,
+      r1: data.r1,
+      r2: data.r2,
+      r3: data.r3,
+      r4: data.r4,
+      s1: data.s1,
+      s2: data.s2,
+      s3: data.s3,
+      s4: data.s4,
+      recommendation: data.recommendation,
     );
-  }
-
-  Widget _marketLevelRow({
-    required String label,
-    required double value,
-    required Color color,
-    bool isPivot = false,
-  }) {
-    final width = MediaQuery.of(context).size.width * 0.62;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 36,
-            child: Text(label, style: AppTypography.body.copyWith(fontWeight: FontWeight.w700)),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: width,
-            height: 26,
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: color.withAlpha(isPivot ? 30 : 75),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              formatNumber(value),
-              style: AppTypography.body.copyWith(
-                color: color,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
+    HistoryService.instance.addPivot(entry);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Hasil pivot berhasil disimpan ke riwayat'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Color(0xFF16A34A),
       ),
     );
   }
@@ -487,42 +138,394 @@ class _PivotPointViewState extends State<_PivotPointView> {
     final viewModel = context.watch<PivotPointViewModel>();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF2F4F7),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          children: [
+            // ── HEADER ─────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(children: [_BackButton()]),
+            ),
+            const SizedBox(height: 20),
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Pivot Point',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Masukkan data pasar untuk menghitung level support dan resistance.',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ── MODE SWITCH ─────────────────────────────────────
+                    Container(
+                      height: 44,
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE2E8F0),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TabBar(
+                        controller: _tabController,
+                        indicator: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(15),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        dividerColor: Colors.transparent,
+                        labelColor: const Color(0xFF0F172A),
+                        unselectedLabelColor: const Color(0xFF64748B),
+                        labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                        tabs: const [Tab(text: 'Manual'), Tab(text: 'Newsmaker')],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ── INPUT CARD ──────────────────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 12, offset: const Offset(0, 3)),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(18),
+                        child: _isManual
+                            ? _buildManualInputs()
+                            : _buildNewsmakerInputs(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── HITUNG BUTTON ─────────────────────────────────
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: viewModel.isLoading ? null : () => _calculate(viewModel),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: viewModel.isLoading
+                            ? const SizedBox(
+                                width: 22, height: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Text(
+                                'HITUNG PIVOT',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 0.8),
+                              ),
+                      ),
+                    ),
+
+                    // ── RESULTS ──────────────────────────────────────
+                    if (viewModel.result != null) ...[
+                      const SizedBox(height: 24),
+                      _buildResults(context, viewModel),
+                    ],
+
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildManualInputs() {
+    return Column(
+      children: [
+        _inputField(label: 'HIGH', hint: '4145.00', controller: highController),
+        const SizedBox(height: 20),
+        _inputField(label: 'LOW', hint: '4110.00', controller: lowController),
+        const SizedBox(height: 20),
+        _inputField(label: 'CLOSE', hint: '4132.00', controller: closeController),
+        const SizedBox(height: 20),
+        _inputField(label: 'OPEN (OP)', hint: '4118.00', controller: opController),
+      ],
+    );
+  }
+
+  Widget _buildNewsmakerInputs() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 8, height: 8,
+              decoration: const BoxDecoration(color: AppColors.positive, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 6),
+            const Text(
+              'Data Source: Newsmaker',
+              style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        _inputField(label: 'HIGH', hint: '4138.00', controller: nmHighController),
+        const SizedBox(height: 20),
+        _inputField(label: 'LOW', hint: '4128.00', controller: nmLowController),
+        const SizedBox(height: 20),
+        _inputField(label: 'CLOSE', hint: '4134.00', controller: nmCloseController),
+        const SizedBox(height: 20),
+        _inputField(label: 'OPEN (OP)', hint: '4132.00', controller: nmOpenController),
+      ],
+    );
+  }
+
+  Widget _inputField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF94A3B8),
+            letterSpacing: 0.5,
+          ),
+        ),
+        Container(
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.5)),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [UsdNumberInputFormatter(allowFraction: true)],
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F172A),
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFCBD5E1),
+              ),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResults(BuildContext context, PivotPointViewModel viewModel) {
+    final data = viewModel.result!;
+    final rec = data.recommendation;
+    final signalColor = _signalColor(rec);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // PP & Range row
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Titik Pivot (PP)', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                    const SizedBox(height: 6),
+                    Text(formatNumber(data.pp), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Rentang Harian', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                    const SizedBox(height: 6),
+                    Text(formatNumber(data.range, decimals: 2), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Recommendation
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: signalColor,
+            borderRadius: BorderRadius.circular(18),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.business_center_outlined, size: 30),
-                      const SizedBox(width: 10),
-                      const Text('EWF Staff Utility', style: AppTypography.title),
-                    ],
-                  ),
-                  const Icon(Icons.dark_mode_outlined),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              const Text('Pivot Point Calculator', style: AppTypography.title),
-              const SizedBox(height: AppSpacing.sm),
-              const Text(
-                'Enter daily market values to generate support and resistance levels.',
-                style: AppTypography.body,
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              _buildSwitch(viewModel),
-              const SizedBox(height: AppSpacing.xl),
-              if (viewModel.isManualMode) _buildManualPanel(viewModel) else _buildNewsmakerPanel(viewModel),
-              _buildResult(viewModel),
-              const SizedBox(height: AppSpacing.xl),
+              const Text('REKOMENDASI', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.8)),
+              const SizedBox(height: 6),
+              Text(rec, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 1)),
             ],
           ),
         ),
+        const SizedBox(height: 12),
+
+        // Levels
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 12, offset: const Offset(0, 3)),
+            ],
+          ),
+          child: Column(
+            children: [
+              _levelRow('R4', data.r4, const Color(0xFFDC2626)),
+              _divider(),
+              _levelRow('R3', data.r3, const Color(0xFFDC2626)),
+              _divider(),
+              _levelRow('R2', data.r2, const Color(0xFFDC2626)),
+              _divider(),
+              _levelRow('R1', data.r1, const Color(0xFFDC2626)),
+              _divider(),
+              _levelRow('PP', data.pp, const Color(0xFF0F172A), isPivot: true),
+              _divider(),
+              _levelRow('S1', data.s1, const Color(0xFF16A34A)),
+              _divider(),
+              _levelRow('S2', data.s2, const Color(0xFF16A34A)),
+              _divider(),
+              _levelRow('S3', data.s3, const Color(0xFF16A34A)),
+              _divider(),
+              _levelRow('S4', data.s4, const Color(0xFF16A34A)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Save Button
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: OutlinedButton(
+            onPressed: () => _saveToHistory(viewModel),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF0F172A),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.bookmark_rounded, size: 18),
+                SizedBox(width: 8),
+                Text('Simpan ke Riwayat', style: TextStyle(fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _levelRow(String label, double value, Color color, {bool isPivot = false}) {
+    return Container(
+      color: isPivot ? const Color(0xFFF8FAFC) : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isPivot ? FontWeight.w800 : FontWeight.w600,
+                color: color,
+              ),
+            ),
+            Text(
+              formatNumber(value),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _divider() => const Divider(height: 0, color: Color(0xFFF1F5F9));
+}
+
+class _BackButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 6, offset: const Offset(0, 1)),
+          ],
+        ),
+        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Color(0xFF0F172A)),
       ),
     );
   }
