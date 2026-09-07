@@ -6,6 +6,6 @@ void main() {
   testWidgets('app shows the gold calculator entry from the home shell', (tester) async {
     await tester.pumpWidget(const App());
 
-    expect(find.text('Physical Gold Calculator'), findsOneWidget);
+    expect(find.text('Kalkulator Emas\nFisik'), findsOneWidget);
   });
 }

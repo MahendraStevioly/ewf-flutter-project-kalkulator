@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../features/dashboard/presentation/views/dashboard_screen.dart';
 import '../../features/gold_calculator/presentation/views/gold_calculator_result_view.dart';
 import '../../features/gold_calculator/presentation/views/gold_calculator_screen.dart';
 import '../../features/history/presentation/views/history_screen.dart';
@@ -27,7 +28,7 @@ class AppRouter {
       case AppRoutes.home:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => const HomeShellScreen(),
+          builder: (_) => const DashboardScreen(),
         );
       case AppRoutes.goldCalculator:
         return MaterialPageRoute(
