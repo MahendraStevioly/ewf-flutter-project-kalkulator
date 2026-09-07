@@ -7,6 +7,9 @@ import '../../features/history/presentation/views/history_screen.dart';
 import '../../features/live_gold/presentation/views/live_gold_screen.dart';
 import '../../features/pivot_point/presentation/views/pivot_point_screen.dart';
 import '../../features/settings/presentation/views/settings_screen.dart';
+import '../../features/history/presentation/views/gold_detail_screen.dart';
+import '../../features/history/presentation/views/pivot_detail_screen.dart';
+import '../../features/commodity_chart/presentation/views/commodity_chart_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -18,6 +21,9 @@ class AppRoutes {
   static const String liveGold = '/live-gold';
   static const String history = '/history';
   static const String settings = '/settings';
+  static const String goldDetail = '/gold-detail';
+  static const String pivotDetail = '/pivot-detail';
+  static const String commodityChart = '/commodity-chart';
 }
 
 class AppRouter {
@@ -54,6 +60,21 @@ class AppRouter {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const HistoryScreen(),
+        );
+      case AppRoutes.goldDetail:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const GoldDetailScreen(),
+        );
+      case AppRoutes.pivotDetail:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const PivotDetailScreen(),
+        );
+      case AppRoutes.commodityChart:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const CommodityChartScreen(),
         );
       case AppRoutes.settings:
         return MaterialPageRoute(

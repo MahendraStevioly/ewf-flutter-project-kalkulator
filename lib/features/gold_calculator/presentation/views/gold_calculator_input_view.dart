@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/number_formatter.dart';
 import '../viewmodels/gold_calculator_viewmodel.dart';
 
@@ -19,8 +18,8 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
   final TextEditingController hbController = TextEditingController(text: '');
   final TextEditingController hjController = TextEditingController(text: '');
   final TextEditingController modalController = TextEditingController(text: '');
-  final TextEditingController kursController = TextEditingController(text: '18000');
-  bool showParameterDetail = true;
+  final TextEditingController kursController = TextEditingController(text: '18.000');
+  bool showParameterDetail = false;
   bool isFetchingRate = false;
 
   @override
@@ -60,10 +59,13 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
 
     if (viewModel.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(viewModel.errorMessage!)),
+        SnackBar(
+          content: Text(viewModel.errorMessage!),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.negative,
+        ),
       );
     } else {
-      // Pass calculation result via Navigator arguments
       Navigator.of(context).pushNamed(
         AppRoutes.goldCalculatorResult,
         arguments: viewModel.hasil,
@@ -74,317 +76,382 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        elevation: 0,
-        leading: const Icon(Icons.domain_rounded, color: AppColors.dark),
-        title: const Text('EWF Staff Utility', style: TextStyle(color: AppColors.dark, fontWeight: FontWeight.w700)),
-        actions: const [Icon(Icons.access_time_rounded, color: AppColors.dark)],
-      ),
+      backgroundColor: const Color(0xFFF2F4F7),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title and Subtitle
-              Text(
-                'Kalkulator Emas Fisik',
-                style: AppTypography.title,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              const Text(
-                'Perhitungan keuntungan investasi emas fisik berdasarkan harga pasar terkini.',
-                style: AppTypography.body,
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              
-              // Harga Beli
-              Text('Harga Beli (HB)', style: AppTypography.sectionTitle),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: hbController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  UsdNumberInputFormatter(allowFraction: true),
+        child: Column(
+          children: [
+            // ── HEADER ─────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(
+                children: [
+                  _BackButton(),
                 ],
-                decoration: InputDecoration(
-                  prefix: const Text('\$ ', style: AppTypography.body),
-                  hintText: '0.00',
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.lightGray),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.lightGray),
-                  ),
-                ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              const Text(
-                'Harga per troy ounce dalam USD',
-                style: AppTypography.muted,
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              
-              // Harga Jual
-              Text('Harga Jual (HJ)', style: AppTypography.sectionTitle),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: hjController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  UsdNumberInputFormatter(allowFraction: true),
-                ],
-                decoration: InputDecoration(
-                  prefix: const Text('\$ ', style: AppTypography.body),
-                  hintText: '0.00',
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.lightGray),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.lightGray),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              const Text(
-                'Harga per troy ounce dalam USD',
-                style: AppTypography.muted,
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              
-              // Modal Awal
-              Text('Modal Awal (IDR)', style: AppTypography.sectionTitle),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: modalController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  IndonesianNumberInputFormatter(allowFraction: false),
-                ],
-                decoration: InputDecoration(
-                  prefix: const Text('Rp ', style: AppTypography.body),
-                  hintText: '0',
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.lightGray),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.lightGray),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              const Text(
-                'Total dana modal investasi dalam Rupiah',
-                style: AppTypography.muted,
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-              
-              // Parameter Dasar
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.lightGray),
-                  borderRadius: BorderRadius.circular(14),
-                ),
+            ),
+            const SizedBox(height: 20),
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.tune_rounded, size: 20),
-                              const SizedBox(width: 8),
-                              const Text('Parameter Dasar', style: AppTypography.body),
-                            ],
-                          ),
-                          GestureDetector(
-                            onTap: () => setState(() => showParameterDetail = !showParameterDetail),
-                            child: Text(
-                              showParameterDetail ? 'Sembunyikan' : 'Edit Kurs',
-                              style: AppTypography.body.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+                    // Title
+                    const Text(
+                      'Kalkulator Emas Fisik',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Simulasi perhitungan keuntungan investasi emas fisik berdasarkan harga pasar.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF64748B),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // ── INPUT FIELDS CARD ───────────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(8),
+                            blurRadius: 12,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                    ),
-                    if (showParameterDetail) ...[
-                      Container(
-                        color: AppColors.background,
-                        padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Padding(
+                        padding: const EdgeInsets.all(18),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text('KURS USD/IDR', style: AppTypography.label),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.positive.withAlpha(30),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Container(
-                                            width: 6,
-                                            height: 6,
-                                            decoration: const BoxDecoration(
-                                              color: AppColors.positive,
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'LIVE',
-                                            style: AppTypography.muted.copyWith(
-                                              color: AppColors.positive,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 10,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (isFetchingRate)
-                                  const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                else
-                                  GestureDetector(
-                                    onTap: _loadLiveRate,
-                                    child: const Icon(Icons.refresh_rounded, size: 18, color: AppColors.primary),
-                                  ),
-                              ],
+                            // HB Field
+                            _buildFieldLabel('HARGA BELI (HB)', 'USD / troy oz'),
+                            const SizedBox(height: 8),
+                            _buildTextField(
+                              controller: hbController,
+                              hint: '4100.00',
+                              prefix: '\$',
+                              formatter: UsdNumberInputFormatter(allowFraction: true),
                             ),
-                            const SizedBox(height: 6),
-                            TextField(
-                              controller: kursController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              inputFormatters: [
-                                IndonesianNumberInputFormatter(allowFraction: true),
-                              ],
-                              decoration: InputDecoration(
-                                prefix: const Text('Rp ', style: AppTypography.body),
-                                hintText: viewModel.liveRate != null
-                                    ? formatNumber(viewModel.liveRate!, decimals: 0)
-                                    : '18.000',
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: AppColors.lightGray),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: AppColors.lightGray),
-                                ),
-                              ),
+                            const SizedBox(height: 20),
+
+                            // HJ Field
+                            _buildFieldLabel('HARGA JUAL (HJ)', 'USD / troy oz'),
+                            const SizedBox(height: 8),
+                            _buildTextField(
+                              controller: hjController,
+                              hint: '4130.00',
+                              prefix: '\$',
+                              formatter: UsdNumberInputFormatter(allowFraction: true),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              viewModel.liveRate != null
-                                  ? 'Kurs live pasar terkini: Rp ${viewModel.formatCurrency(viewModel.liveRate!).replaceFirst('Rp', '')} (dapat disesuaikan)'
-                                  : 'Kurs USD ke IDR (dapat disesuaikan)',
-                              style: AppTypography.muted,
+                            const SizedBox(height: 20),
+
+                            // Modal Field
+                            _buildFieldLabel('MODAL AWAL', 'IDR'),
+                            const SizedBox(height: 8),
+                            _buildTextField(
+                              controller: modalController,
+                              hint: '100.000.000',
+                              prefix: 'Rp',
+                              formatter: IndonesianNumberInputFormatter(allowFraction: false),
                             ),
-                            const SizedBox(height: AppSpacing.md),
-                            _parameterField('KONVERSI TOZ (G)', '${viewModel.konversiTozG.toStringAsFixed(1)} gram'),
                           ],
                         ),
                       ),
-                    ],
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // ── PARAMETER DASAR ─────────────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(8),
+                            blurRadius: 12,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          // Header row (always visible)
+                          InkWell(
+                            onTap: () => setState(() => showParameterDetail = !showParameterDetail),
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              child: Row(
+                                children: [
+                                  const Text(
+                                    'PARAMETER DASAR',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF64748B),
+                                      letterSpacing: 0.6,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Row(
+                                    children: [
+                                      _miniParamChip('Modal', 'Rp 100 jt'),
+                                      const SizedBox(width: 6),
+                                      _miniParamChip('Kurs', isFetchingRate ? '...' : 'Rp ${kursController.text}'),
+                                      const SizedBox(width: 6),
+                                      _miniParamChip('TOZ', '31.1'),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    child: Text(
+                                      showParameterDetail ? 'Tutup' : 'Edit',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Expandable detail
+                          if (showParameterDetail) ...[
+                            const Divider(height: 0, color: Color(0xFFF1F5F9)),
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'KURS USD/IDR',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.positive.withAlpha(30),
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.circle, size: 7, color: AppColors.positive),
+                                                SizedBox(width: 4),
+                                                Text('LIVE', style: TextStyle(fontSize: 10, color: AppColors.positive, fontWeight: FontWeight.w700)),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          if (isFetchingRate)
+                                            const SizedBox(
+                                              width: 14,
+                                              height: 14,
+                                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                                            )
+                                          else
+                                            GestureDetector(
+                                              onTap: _loadLiveRate,
+                                              child: const Icon(Icons.refresh_rounded, size: 18, color: AppColors.primary),
+                                            ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildTextField(
+                                    controller: kursController,
+                                    hint: '18.000',
+                                    prefix: 'Rp',
+                                    formatter: IndonesianNumberInputFormatter(allowFraction: true),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _paramRow('KONVERSI TOZ', '${viewModel.konversiTozG.toStringAsFixed(1)} gram / troy oz'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── HITUNG BUTTON ────────────────────────────────────
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _handleCalculate,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shadowColor: AppColors.primary.withAlpha(80),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          'HITUNG KEUNTUNGAN',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 0.8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.xxl),
-              
-              // Hitung Button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _handleCalculate,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.dark,
-                    foregroundColor: AppColors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.calculate),
-                      const SizedBox(width: 8),
-                      const Text('HITUNG KEUNTUNGAN'),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              
-              // Empty State
-              Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.calculate_rounded, size: 48, color: AppColors.lightGray),
-                    const SizedBox(height: AppSpacing.md),
-                    const Text(
-                      'Hasil kalkulasi akan muncul di sini.',
-                      style: AppTypography.muted,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _parameterField(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildFieldLabel(String label, String unit) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: AppTypography.label),
-        const SizedBox(height: 4),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.lightGray),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF64748B),
+            letterSpacing: 0.5,
           ),
-          child: Text(value, style: AppTypography.body),
+        ),
+        Text(
+          unit,
+          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
         ),
       ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required String prefix,
+    required dynamic formatter,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.5)),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [formatter],
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
+        ),
+        decoration: InputDecoration(
+          prefixText: prefix.isNotEmpty ? '$prefix ' : null,
+          prefixStyle: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFFCBD5E1),
+          ),
+          hintText: hint,
+          hintStyle: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFFCBD5E1),
+          ),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        ),
+      ),
+    );
+  }
+
+  Widget _miniParamChip(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 9, color: Color(0xFF94A3B8))),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  Widget _paramRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF64748B),
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BackButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 6, offset: const Offset(0, 1)),
+          ],
+        ),
+        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Color(0xFF0F172A)),
+      ),
     );
   }
 }
