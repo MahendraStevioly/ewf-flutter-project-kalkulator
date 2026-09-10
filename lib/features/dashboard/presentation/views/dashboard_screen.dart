@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import '../../../news/presentation/views/all_news_screen.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/history_service.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -11,6 +11,7 @@ import '../../domain/entities/news_item.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
 import '../widgets/news_card.dart';
 import '../widgets/news_detail_bottom_sheet.dart';
+import 'package:kalkulator_pivot/features/news/presentation/viewmodels/news_viewmodel.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -72,9 +73,7 @@ class _DashboardViewState extends State<_DashboardView> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             // ── HEADER SECTION ──────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: _buildHeader(context, viewModel),
-            ),
+            SliverToBoxAdapter(child: _buildHeader(context, viewModel)),
 
             // ── BODY CONTENT ────────────────────────────────────────────────
             SliverPadding(
@@ -89,8 +88,16 @@ class _DashboardViewState extends State<_DashboardView> {
                   _buildSectionHeader(
                     context,
                     title: 'Berita Terkini',
-                    actionLabel: 'Pasar Global',
-                    onAction: null,
+                    actionLabel: 'Lihat Semua →',
+                    onAction: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChangeNotifierProvider(
+                          create: (_) => NewsViewModel(),
+                          child: const AllNewsScreen(),
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   _buildNewsSection(context, viewModel),
@@ -118,7 +125,8 @@ class _DashboardViewState extends State<_DashboardView> {
                     context,
                     title: 'Riwayat Terbaru',
                     actionLabel: 'Lihat Semua →',
-                    onAction: () => Navigator.of(context).pushNamed(AppRoutes.history),
+                    onAction: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.history),
                   ),
                   const SizedBox(height: 12),
                   _buildRecentHistory(context),
@@ -368,7 +376,10 @@ String _getFormattedTime(DateTime now) {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFDCFCE7),
                       borderRadius: BorderRadius.circular(6),
@@ -376,7 +387,11 @@ String _getFormattedTime(DateTime now) {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.arrow_upward_rounded, size: 12, color: Color(0xFF16A34A)),
+                        Icon(
+                          Icons.arrow_upward_rounded,
+                          size: 12,
+                          color: Color(0xFF16A34A),
+                        ),
                         SizedBox(width: 2),
                         Text(
                           '+0.30%',
@@ -516,9 +531,15 @@ String _getFormattedTime(DateTime now) {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 8, child: ColoredBox(color: Color(0xFFE2E8F0))),
+                SizedBox(
+                  height: 8,
+                  child: ColoredBox(color: Color(0xFFE2E8F0)),
+                ),
                 SizedBox(height: 6),
-                SizedBox(height: 12, child: ColoredBox(color: Color(0xFFE2E8F0))),
+                SizedBox(
+                  height: 12,
+                  child: ColoredBox(color: Color(0xFFE2E8F0)),
+                ),
               ],
             ),
           ),
@@ -725,14 +746,14 @@ String _getFormattedTime(DateTime now) {
             tile = _buildHistoryTile(
               context: context,
               isGold: true,
-              title: 'HB \$${g.hb.toStringAsFixed(2)}  |  HJ \$${g.hj.toStringAsFixed(2)}',
+              title:
+                  'HB \$${g.hb.toStringAsFixed(2)}  |  HJ \$${g.hj.toStringAsFixed(2)}',
               subtitle: _formatDateTime(g.timestamp),
               value: _formatCurrencyShort(g.keuntunganBersih),
               isPositive: g.keuntunganBersih >= 0,
-              onTap: () => Navigator.of(context).pushNamed(
-                AppRoutes.goldDetail,
-                arguments: g,
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).pushNamed(AppRoutes.goldDetail, arguments: g),
             );
           } else {
             final p = item['entry'] as PivotHistoryEntry;
@@ -744,10 +765,9 @@ String _getFormattedTime(DateTime now) {
               value: p.recommendation,
               isPositive: p.recommendation == 'BUY',
               isNeutral: p.recommendation == 'NEUTRAL',
-              onTap: () => Navigator.of(context).pushNamed(
-                AppRoutes.pivotDetail,
-                arguments: p,
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).pushNamed(AppRoutes.pivotDetail, arguments: p),
             );
           }
 
@@ -776,8 +796,8 @@ String _getFormattedTime(DateTime now) {
     final Color valueColor = isNeutral
         ? const Color(0xFF64748B)
         : isPositive
-            ? const Color(0xFF16A34A)
-            : const Color(0xFFDC2626);
+        ? const Color(0xFF16A34A)
+        : const Color(0xFFDC2626);
 
     return InkWell(
       onTap: onTap,
@@ -789,11 +809,15 @@ String _getFormattedTime(DateTime now) {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: isGold ? const Color(0xFFFFF3E0) : const Color(0xFFEFF6FF),
+                color: isGold
+                    ? const Color(0xFFFFF3E0)
+                    : const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                isGold ? Icons.diamond_outlined : Icons.candlestick_chart_rounded,
+                isGold
+                    ? Icons.diamond_outlined
+                    : Icons.candlestick_chart_rounded,
                 size: 20,
                 color: isGold ? AppColors.primary : const Color(0xFF3B82F6),
               ),
@@ -840,8 +864,18 @@ String _getFormattedTime(DateTime now) {
 
   String _formatDateTime(DateTime dt) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
