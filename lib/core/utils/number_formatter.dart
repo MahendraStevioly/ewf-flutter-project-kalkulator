@@ -82,7 +82,7 @@ class IndonesianNumberInputFormatter extends TextInputFormatter {
 
   IndonesianNumberInputFormatter({
     this.allowFraction = true,
-    this.maxFractionDigits = 2,
+    this.maxFractionDigits = 3, // Gw set 3 karena emas biasanya 3 digit di belakang koma (misal: 4,100)
   });
 
   @override
@@ -96,6 +96,7 @@ class IndonesianNumberInputFormatter extends TextInputFormatter {
 
     String text = newValue.text;
 
+    // Autocorrect jika user ngetik titik (.) padahal format Indo pakai koma (,)
     if (allowFraction && text.contains('.') && !text.contains(',')) {
       final lastDotIndex = text.lastIndexOf('.');
       final afterDot = text.substring(lastDotIndex + 1);
@@ -135,9 +136,13 @@ class IndonesianNumberInputFormatter extends TextInputFormatter {
       formattedText += ',$fractionPart';
     }
 
+    // ===============================================
+    // FIX KURSOR: Pake `text[i]` BUKAN `newValue.text[i]`
+    // ===============================================
     int cursorDigitCount = 0;
-    for (int i = 0; i < newValue.selection.end && i < newValue.text.length; i++) {
-      if (RegExp(r'[\d,]').hasMatch(newValue.text[i])) {
+    int limit = newValue.selection.end.clamp(0, text.length);
+    for (int i = 0; i < limit; i++) {
+      if (RegExp(r'[\d,]').hasMatch(text[i])) { 
         cursorDigitCount++;
       }
     }
@@ -249,5 +254,111 @@ class UsdNumberInputFormatter extends TextInputFormatter {
         offset: newSelectionIndex.clamp(0, formattedText.length),
       ),
     );
+  }
+}
+
+class GoldPriceInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // =========================
+    // 1. INPUT KOSONG
+    // =========================
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    // =========================
+    // 2. AMBIL DIGIT SAJA
+    // =========================
+    final digitsOnly = newValue.text.replaceAll(RegExp(r'\D'), '');
+
+    if (digitsOnly.isEmpty) {
+      return const TextEditingValue(
+        text: '',
+        selection: TextSelection.collapsed(offset: 0),
+      );
+    }
+
+    // =========================
+    // 3. FORMAT RIBUAN
+    // =========================
+    final formattedText = digitsOnly.replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (match) => '.',
+    );
+
+    // =========================
+    // 4. KHUSUS CURSOR
+    // =========================
+    //
+    // Hitung berapa digit yang berada
+    // di sebelah kiri cursor pada newValue.
+    //
+    // Contoh:
+    //
+    // 4.10|
+    // digit di kiri cursor = 3
+    //
+    // Setelah diformat menjadi:
+    //
+    // 410|
+    //
+    // cursor harus berada setelah digit ke-3.
+    //
+    final cursorOffset = newValue.selection.baseOffset.clamp(
+      0,
+      newValue.text.length,
+    );
+
+    int digitBeforeCursor = 0;
+
+    for (int i = 0; i < cursorOffset; i++) {
+      if (_isDigit(newValue.text[i])) {
+        digitBeforeCursor++;
+      }
+    }
+
+    // =========================
+    // 5. CARI POSISI CURSOR BARU
+    // =========================
+    int newCursorOffset = 0;
+    int digitCount = 0;
+
+    for (int i = 0; i < formattedText.length; i++) {
+      if (_isDigit(formattedText[i])) {
+        digitCount++;
+
+        if (digitCount == digitBeforeCursor) {
+          newCursorOffset = i + 1;
+          break;
+        }
+      }
+    }
+
+    // Kalau cursor berada setelah semua digit,
+    // pastikan cursor benar-benar di paling belakang.
+    if (digitBeforeCursor >= digitsOnly.length) {
+      newCursorOffset = formattedText.length;
+    }
+
+    // Kalau cursor berada di paling kiri.
+    if (digitBeforeCursor == 0) {
+      newCursorOffset = 0;
+    }
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(
+        offset: newCursorOffset,
+      ),
+    );
+  }
+
+  bool _isDigit(String character) {
+    return character.codeUnitAt(0) >= 48 &&
+        character.codeUnitAt(0) <= 57;
   }
 }

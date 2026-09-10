@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../news/presentation/views/all_news_screen.dart';
@@ -23,8 +25,40 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-class _DashboardView extends StatelessWidget {
+class _DashboardView extends StatefulWidget {
   const _DashboardView();
+
+  @override
+  State<_DashboardView> createState() => _DashboardViewState();
+}
+
+class _DashboardViewState extends State<_DashboardView> {
+  late DateTime _currentTime;
+  Timer? _clockTimer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _currentTime = DateTime.now();
+
+    _clockTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) {
+        if (mounted) {
+          setState(() {
+            _currentTime = DateTime.now();
+          });
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _clockTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +114,11 @@ class _DashboardView extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   _buildFeatureList(context),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
+
+                  // Pengaturan
+                  _buildSettingsTile(context),
+                  const SizedBox(height: 12),
 
                   // Riwayat Terbaru
                   _buildSectionHeader(
@@ -105,34 +143,51 @@ class _DashboardView extends StatelessWidget {
   // ─────────────────────────────────────────────────────────
   // HEADER (no AppBar, custom top area)
   // ─────────────────────────────────────────────────────────
-  Widget _buildHeader(BuildContext context, DashboardViewModel viewModel) {
-    return Container(
+  Widget _buildHeader(
+  BuildContext context,
+  DashboardViewModel viewModel,
+) {
+  return Padding(
+    padding: EdgeInsets.fromLTRB(
+      16,
+      MediaQuery.of(context).padding.top + 10,
+      16,
+      0,
+    ),
+    child: Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E293B),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      padding: const EdgeInsets.fromLTRB(
+        20,
+        18,
+        20,
+        22,
       ),
-      padding: EdgeInsets.fromLTRB(
-        20,
-        MediaQuery.of(context).padding.top + 16,
-        20,
-        24,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(28),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row: brand + history icon
+          // ── TOP ROW ─────────────────────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 34,
+                    height: 34,
                     decoration: BoxDecoration(
                       color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Center(
                       child: Text(
@@ -158,14 +213,19 @@ class _DashboardView extends StatelessWidget {
                   ),
                 ],
               ),
+
+              // History
               InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: () => Navigator.of(context).pushNamed(AppRoutes.history),
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => Navigator.of(context).pushNamed(
+                  AppRoutes.history,
+                ),
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: Colors.white.withAlpha(20),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.access_time_rounded,
@@ -176,59 +236,109 @@ class _DashboardView extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
 
-          // Greeting & date
+          const SizedBox(height: 24),
+
+          // ── GREETING ────────────────────────────────────────
           const Text(
             'Selamat datang',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 24,
+              fontSize: 25,
               fontWeight: FontWeight.w800,
               height: 1.1,
+              letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 4),
+
+          const SizedBox(height: 8),
+
+          // ── DATE ────────────────────────────────────────────
           Text(
-            _getFormattedDate(),
+            _getFormattedDate(_currentTime),
             style: const TextStyle(
               color: Color(0xFF94A3B8),
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
           ),
+
+          const SizedBox(height: 4),
+
+          // ── REAL-TIME CLOCK ────────────────────────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.schedule_rounded,
+                size: 15,
+                color: Color(0xFFF7941D),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                _getFormattedTime(_currentTime),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(width: 5),
+              const Text(
+                'WIB',
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  String _getFormattedDate() {
-    final now = DateTime.now();
-    final days = [
-      'Minggu',
-      'Senin',
-      'Selasa',
-      'Rabu',
-      'Kamis',
-      'Jumat',
-      'Sabtu',
-    ];
-    final months = [
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-    return '${days[now.weekday % 7]}, ${now.day} ${months[now.month - 1]} ${now.year}';
-  }
+  String _getFormattedDate(DateTime now) {
+  final days = [
+    'Minggu',
+    'Senin',
+    'Selasa',
+    'Rabu',
+    'Kamis',
+    'Jumat',
+    'Sabtu',
+  ];
+
+  final months = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ];
+
+  return '${days[now.weekday % 7]}, '
+      '${now.day} ${months[now.month - 1]} ${now.year}';
+}
+
+String _getFormattedTime(DateTime now) {
+  final hour = now.hour.toString().padLeft(2, '0');
+  final minute = now.minute.toString().padLeft(2, '0');
+  final second = now.second.toString().padLeft(2, '0');
+
+  return '$hour:$minute:$second';
+}
+
 
   // ─────────────────────────────────────────────────────────
   // XAU/USD PRICE CARD
@@ -467,15 +577,10 @@ class _DashboardView extends StatelessWidget {
         iconColor: AppColors.primary,
         iconBg: const Color(0xFFFFF3E0),
       ),
-      _FeatureItem(
-        icon: Icons.settings_rounded,
-        title: 'Pengaturan',
-        subtitle: 'Konfigurasi parameter & preferensi',
-        route: AppRoutes.settings,
-        iconColor: const Color(0xFF334155),
-        iconBg: const Color(0xFFF1F5F9),
-      ),
+
     ];
+
+
 
     return Container(
       decoration: BoxDecoration(
@@ -511,6 +616,77 @@ class _DashboardView extends StatelessWidget {
       ),
     );
   }
+
+  
+  Widget _buildSettingsTile(BuildContext context) {
+  return InkWell(
+    onTap: () => Navigator.of(context).pushNamed(AppRoutes.settings),
+    borderRadius: BorderRadius.circular(16),
+    child: Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.settings_rounded,
+              color: Color(0xFF334155),
+              size: 21,
+            ),
+          ),
+
+          const SizedBox(width: 14),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Pengaturan',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Konfigurasi parameter & preferensi',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: Color(0xFF94A3B8),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 
   // ─────────────────────────────────────────────────────────
   // RECENT HISTORY
