@@ -29,4 +29,7 @@ class AppConstants {
 
   /// Tembaga (Copper) - Sesuai tab di desain UI Anda
   static const String symbolCopper = 'OANDA:XCUUSD';
+
+  /// Hang Seng Index (HSI) - Sesuai tab di desain UI Anda
+  static const String symbolHangSeng = 'VANTAGE:HK50';
 }

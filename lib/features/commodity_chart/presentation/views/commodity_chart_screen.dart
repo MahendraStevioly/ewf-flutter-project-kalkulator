@@ -16,9 +16,10 @@ class _CommodityChartScreenState extends State<CommodityChartScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // Data komoditas sekarang hanya menyimpan nama dan simbol TradingView
+  // ── PENAMBAHAN HANG SENG DI SINI ──
   final List<_Commodity> _commodities = const [
     _Commodity(name: 'Emas', tvSymbol: AppConstants.symbolGold),
+    _Commodity(name: 'Hang Seng', tvSymbol: 'VANTAGE:HK50'), // <-- Opsi Hang Seng
     _Commodity(name: 'Perak', tvSymbol: AppConstants.symbolSilver),
     _Commodity(name: 'Minyak', tvSymbol: AppConstants.symbolOil),
     _Commodity(name: 'Gas', tvSymbol: AppConstants.symbolGas),
@@ -30,6 +31,7 @@ class _CommodityChartScreenState extends State<CommodityChartScreen>
   @override
   void initState() {
     super.initState();
+    // Karena length diambil dari _commodities.length, jumlah tab akan otomatis jadi 6!
     _tabController = TabController(length: _commodities.length, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) return;
@@ -65,7 +67,7 @@ class _CommodityChartScreenState extends State<CommodityChartScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Grafik Komoditas',
+                          'Grafik Komoditas & Indeks', // Sedikit penyesuaian judul
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../../../core/services/history_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/number_formatter.dart';
 import '../viewmodels/pivot_point_viewmodel.dart';
+import '../widgets/newsmaker_table_widget.dart'; // <-- IMPORT TABEL NEWSMAKER
 
 class PivotPointScreen extends StatelessWidget {
   const PivotPointScreen({super.key});
@@ -32,12 +32,6 @@ class _PivotPointViewState extends State<_PivotPointView>
   final TextEditingController closeController = TextEditingController(text: '4,132');
   final TextEditingController opController = TextEditingController(text: '4,118');
 
-  // Newsmaker tab controllers
-  final TextEditingController nmHighController = TextEditingController(text: '4,138.00');
-  final TextEditingController nmLowController = TextEditingController(text: '4,128.00');
-  final TextEditingController nmCloseController = TextEditingController(text: '4,134.00');
-  final TextEditingController nmOpenController = TextEditingController(text: '4,132.00');
-
   late TabController _tabController;
   bool _isManual = true;
 
@@ -48,6 +42,9 @@ class _PivotPointViewState extends State<_PivotPointView>
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) return;
       setState(() => _isManual = _tabController.index == 0);
+      
+      // Reset hasil saat berpindah tab agar UI tetap bersih
+      context.read<PivotPointViewModel>().setManualMode(_isManual);
     });
   }
 
@@ -57,10 +54,6 @@ class _PivotPointViewState extends State<_PivotPointView>
     lowController.dispose();
     closeController.dispose();
     opController.dispose();
-    nmHighController.dispose();
-    nmLowController.dispose();
-    nmCloseController.dispose();
-    nmOpenController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -72,20 +65,13 @@ class _PivotPointViewState extends State<_PivotPointView>
   }
 
   Future<void> _calculate(PivotPointViewModel viewModel) async {
+    // Fungsi ini sekarang hanya digunakan untuk mode Manual
     if (_isManual) {
       await viewModel.calculateManual(
         high: parseDecimal(highController.text),
         low: parseDecimal(lowController.text),
         close: parseDecimal(closeController.text),
         openingPrice: parseDecimal(opController.text),
-      );
-    } else {
-      await viewModel.calculateNewsmaker(
-        symbolInput: 'XAU/USD',
-        open: parseDecimal(nmOpenController.text),
-        high: parseDecimal(nmHighController.text),
-        low: parseDecimal(nmLowController.text),
-        close: parseDecimal(nmCloseController.text),
       );
     }
 
@@ -197,53 +183,54 @@ class _PivotPointViewState extends State<_PivotPointView>
                         unselectedLabelColor: const Color(0xFF64748B),
                         labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-                        tabs: const [Tab(text: 'Manual'), Tab(text: 'Newsmaker')],
+                        tabs: const [Tab(text: 'Manual'), Tab(text: 'Data Historis')],
                       ),
                     ),
                     const SizedBox(height: 20),
 
-                    // ── INPUT CARD ──────────────────────────────────────
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 12, offset: const Offset(0, 3)),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: _isManual
-                            ? _buildManualInputs()
-                            : _buildNewsmakerInputs(),
-                      ),
-                    ),
+                    // ── AREA INPUT / TABEL ──────────────────────────────
+                    _isManual
+                        ? Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 12, offset: const Offset(0, 3)),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(18),
+                              child: _buildManualInputs(),
+                            ),
+                          )
+                        : const NewsmakerTableWidget(), // Panggil tabel di sini
 
-                    const SizedBox(height: 24),
-
-                    // ── HITUNG BUTTON ─────────────────────────────────
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: viewModel.isLoading ? null : () => _calculate(viewModel),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    // ── HITUNG BUTTON (HANYA MUNCUL DI MODE MANUAL) ─────
+                    if (_isManual) ...[
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: viewModel.isLoading ? null : () => _calculate(viewModel),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: viewModel.isLoading
+                              ? const SizedBox(
+                                  width: 22, height: 22,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Text(
+                                  'HITUNG PIVOT',
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 0.8),
+                                ),
                         ),
-                        child: viewModel.isLoading
-                            ? const SizedBox(
-                                width: 22, height: 22,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Text(
-                                'HITUNG PIVOT',
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 0.8),
-                              ),
                       ),
-                    ),
+                    ],
 
                     // ── RESULTS ──────────────────────────────────────
                     if (viewModel.result != null) ...[
@@ -272,35 +259,6 @@ class _PivotPointViewState extends State<_PivotPointView>
         _inputField(label: 'CLOSE', hint: '4132.00', controller: closeController),
         const SizedBox(height: 20),
         _inputField(label: 'OPEN (OP)', hint: '4118.00', controller: opController),
-      ],
-    );
-  }
-
-  Widget _buildNewsmakerInputs() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 8, height: 8,
-              decoration: const BoxDecoration(color: AppColors.positive, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 6),
-            const Text(
-              'Data Source: Newsmaker',
-              style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        _inputField(label: 'HIGH', hint: '4138.00', controller: nmHighController),
-        const SizedBox(height: 20),
-        _inputField(label: 'LOW', hint: '4128.00', controller: nmLowController),
-        const SizedBox(height: 20),
-        _inputField(label: 'CLOSE', hint: '4134.00', controller: nmCloseController),
-        const SizedBox(height: 20),
-        _inputField(label: 'OPEN (OP)', hint: '4132.00', controller: nmOpenController),
       ],
     );
   }
@@ -358,6 +316,17 @@ class _PivotPointViewState extends State<_PivotPointView>
     final rec = data.recommendation;
     final signalColor = _signalColor(rec);
 
+    // ── KALKULASI MIDPOINT ANTAR LEVEL (M-Levels) ──
+    final mR4 = (data.r3 + data.r4) / 2;
+    final mR3 = (data.r2 + data.r3) / 2;
+    final mR2 = (data.r1 + data.r2) / 2;
+    final mR1 = (data.pp + data.r1) / 2;
+    
+    final mS1 = (data.pp + data.s1) / 2;
+    final mS2 = (data.s1 + data.s2) / 2;
+    final mS3 = (data.s2 + data.s3) / 2;
+    final mS4 = (data.s3 + data.s4) / 2;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -403,26 +372,28 @@ class _PivotPointViewState extends State<_PivotPointView>
         ),
         const SizedBox(height: 12),
 
-        // Recommendation
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: signalColor,
-            borderRadius: BorderRadius.circular(18),
+        // ── KOTAK REKOMENDASI (HANYA TAMPIL JIKA MODE MANUAL) ──
+        if (viewModel.isManualMode) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: signalColor,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('REKOMENDASI', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.8)),
+                const SizedBox(height: 6),
+                Text(rec, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 1)),
+              ],
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('REKOMENDASI', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.8)),
-              const SizedBox(height: 6),
-              Text(rec, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 1)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 12),
+        ],
 
-        // Levels
+        // ── DAFTAR LEVEL & MIDPOINT ──
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -435,19 +406,38 @@ class _PivotPointViewState extends State<_PivotPointView>
             children: [
               _levelRow('R4', data.r4, const Color(0xFFDC2626)),
               _divider(),
+              _midpointRow('Mid R3/R4', mR4),
+              _divider(),
               _levelRow('R3', data.r3, const Color(0xFFDC2626)),
+              _divider(),
+              _midpointRow('Mid R2/R3', mR3),
               _divider(),
               _levelRow('R2', data.r2, const Color(0xFFDC2626)),
               _divider(),
+              _midpointRow('Mid R1/R2', mR2),
+              _divider(),
               _levelRow('R1', data.r1, const Color(0xFFDC2626)),
               _divider(),
+              _midpointRow('Mid PP/R1', mR1),
+              _divider(),
+              
+              // Pivot Point (Tengah)
               _levelRow('PP', data.pp, const Color(0xFF0F172A), isPivot: true),
+              _divider(),
+              
+              _midpointRow('Mid PP/S1', mS1),
               _divider(),
               _levelRow('S1', data.s1, const Color(0xFF16A34A)),
               _divider(),
+              _midpointRow('Mid S1/S2', mS2),
+              _divider(),
               _levelRow('S2', data.s2, const Color(0xFF16A34A)),
               _divider(),
+              _midpointRow('Mid S2/S3', mS3),
+              _divider(),
               _levelRow('S3', data.s3, const Color(0xFF16A34A)),
+              _divider(),
+              _midpointRow('Mid S3/S4', mS4),
               _divider(),
               _levelRow('S4', data.s4, const Color(0xFF16A34A)),
             ],
@@ -500,6 +490,38 @@ class _PivotPointViewState extends State<_PivotPointView>
             Text(
               formatNumber(value),
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── WIDGET KHUSUS UNTUK BARIS MIDPOINT ──
+  Widget _midpointRow(String label, double value) {
+    return Container(
+      color: const Color(0xFFF8FAFC).withAlpha(150),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF94A3B8),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            Text(
+              formatNumber(value),
+              style: const TextStyle(
+                fontSize: 12, 
+                fontWeight: FontWeight.w600, 
+                color: Color(0xFF64748B),
+              ),
             ),
           ],
         ),
