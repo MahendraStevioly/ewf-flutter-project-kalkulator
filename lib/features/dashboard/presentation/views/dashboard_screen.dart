@@ -36,11 +36,34 @@ class _DashboardViewState extends State<_DashboardView> {
   late DateTime _currentTime;
   Timer? _clockTimer;
 
+  late final PageController _newsPageController;
+  Timer? _newsAutoSlideTimer;
+
+  String _getFormattedDate(DateTime now) {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    ];
+    return '${now.day} ${months[now.month - 1]} ${now.year}';
+  }
+
+  String _getFormattedTime(DateTime now) {
+    final hour = now.hour.toString().padLeft(2, '0');
+    final minute = now.minute.toString().padLeft(2, '0');
+    final second = now.second.toString().padLeft(2, '0');
+    return '$hour:$minute:$second';
+  }
+
   @override
   void initState() {
     super.initState();
-
     _currentTime = DateTime.now();
+
+    // Set initialPage ke angka besar agar bisa di-swipe bolak-balik sejak awal
+    _newsPageController = PageController(
+      initialPage: 6000, 
+      viewportFraction: 0.75,
+    );
 
     _clockTimer = Timer.periodic(
       const Duration(seconds: 1),
@@ -52,11 +75,28 @@ class _DashboardViewState extends State<_DashboardView> {
         }
       },
     );
+
+    _newsAutoSlideTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _autoSlideNews(),
+    );
+  }
+
+  // Fungsi auto slide yang baru (terus maju ke kanan)
+  void _autoSlideNews() {
+    if (_newsPageController.hasClients) {
+      _newsPageController.nextPage(
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
   void dispose() {
     _clockTimer?.cancel();
+    _newsPageController.dispose();
+    _newsAutoSlideTimer?.cancel();
     super.dispose();
   }
 
@@ -68,23 +108,31 @@ class _DashboardViewState extends State<_DashboardView> {
       backgroundColor: const Color(0xFFF2F4F7),
       body: RefreshIndicator(
         color: AppColors.primary,
-        onRefresh: () => viewModel.refreshAll(),
+        onRefresh: () async {
+          _newsAutoSlideTimer?.cancel();
+
+          if (_newsPageController.hasClients) {
+            _newsPageController.jumpToPage(6000); // Reset ke titik tengah
+          }
+
+          await viewModel.refreshAll();
+          if (!mounted) return;
+
+          _newsAutoSlideTimer = Timer.periodic(
+            const Duration(seconds: 5),
+            (_) => _autoSlideNews(),
+          );
+        },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // ── HEADER SECTION ──────────────────────────────────────────────
             SliverToBoxAdapter(child: _buildHeader(context, viewModel)),
-
-            // ── BODY CONTENT ────────────────────────────────────────────────
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  // XAU/USD Price Card
                   _buildPriceCard(viewModel),
                   const SizedBox(height: 24),
-
-                  // Berita Terkini
                   _buildSectionHeader(
                     context,
                     title: 'Berita Terkini',
@@ -102,8 +150,6 @@ class _DashboardViewState extends State<_DashboardView> {
                   const SizedBox(height: 12),
                   _buildNewsSection(context, viewModel),
                   const SizedBox(height: 24),
-
-                  // Fitur Utama
                   const Text(
                     'Fitur Utama',
                     style: TextStyle(
@@ -115,18 +161,13 @@ class _DashboardViewState extends State<_DashboardView> {
                   const SizedBox(height: 12),
                   _buildFeatureList(context),
                   const SizedBox(height: 12),
-
-                  // Pengaturan
                   _buildSettingsTile(context),
                   const SizedBox(height: 12),
-
-                  // Riwayat Terbaru
                   _buildSectionHeader(
                     context,
                     title: 'Riwayat Terbaru',
                     actionLabel: 'Lihat Semua →',
-                    onAction: () =>
-                        Navigator.of(context).pushNamed(AppRoutes.history),
+                    onAction: () => Navigator.of(context).pushNamed(AppRoutes.history),
                   ),
                   const SizedBox(height: 12),
                   _buildRecentHistory(context),
@@ -140,209 +181,142 @@ class _DashboardViewState extends State<_DashboardView> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────
-  // HEADER (no AppBar, custom top area)
-  // ─────────────────────────────────────────────────────────
-  Widget _buildHeader(
-  BuildContext context,
-  DashboardViewModel viewModel,
-) {
-  return Padding(
-    padding: EdgeInsets.fromLTRB(
-      16,
-      MediaQuery.of(context).padding.top + 10,
-      16,
-      0,
-    ),
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        18,
-        20,
-        22,
+  Widget _buildHeader(BuildContext context, DashboardViewModel viewModel) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + 10,
+        16,
+        0,
       ),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(28),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── TOP ROW ─────────────────────────────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'EWF',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 9,
-                          letterSpacing: 0.5,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(28),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'EWF',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 9,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'STAFF UTILITY',
-                    style: TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      letterSpacing: 1.2,
+                    const SizedBox(width: 10),
+                    const Text(
+                      'STAFF UTILITY',
+                      style: TextStyle(
+                        color: Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.history),
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(20),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.access_time_rounded,
+                      color: Colors.white,
+                      size: 20,
                     ),
                   ),
-                ],
-              ),
-
-              // History
-              InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => Navigator.of(context).pushNamed(
-                  AppRoutes.history,
                 ),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(20),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.access_time_rounded,
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Selamat datang',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 25,
+                fontWeight: FontWeight.w800,
+                height: 1.1,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _getFormattedDate(_currentTime),
+              style: const TextStyle(
+                color: Color(0xFF94A3B8),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.schedule_rounded,
+                  size: 15,
+                  color: Color(0xFFF7941D),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _getFormattedTime(_currentTime),
+                  style: const TextStyle(
                     color: Colors.white,
-                    size: 20,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
                   ),
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-
-          // ── GREETING ────────────────────────────────────────
-          const Text(
-            'Selamat datang',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 25,
-              fontWeight: FontWeight.w800,
-              height: 1.1,
-              letterSpacing: -0.3,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // ── DATE ────────────────────────────────────────────
-          Text(
-            _getFormattedDate(_currentTime),
-            style: const TextStyle(
-              color: Color(0xFF94A3B8),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          // ── REAL-TIME CLOCK ────────────────────────────────
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.schedule_rounded,
-                size: 15,
-                color: Color(0xFFF7941D),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                _getFormattedTime(_currentTime),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.3,
+                const SizedBox(width: 5),
+                const Text(
+                  'WIB',
+                  style: TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 5),
-              const Text(
-                'WIB',
-                style: TextStyle(
-                  color: Color(0xFF94A3B8),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-  String _getFormattedDate(DateTime now) {
-  final days = [
-    'Minggu',
-    'Senin',
-    'Selasa',
-    'Rabu',
-    'Kamis',
-    'Jumat',
-    'Sabtu',
-  ];
-
-  final months = [
-    'Januari',
-    'Februari',
-    'Maret',
-    'April',
-    'Mei',
-    'Juni',
-    'Juli',
-    'Agustus',
-    'September',
-    'Oktober',
-    'November',
-    'Desember',
-  ];
-
-  return '${days[now.weekday % 7]}, '
-      '${now.day} ${months[now.month - 1]} ${now.year}';
-}
-
-String _getFormattedTime(DateTime now) {
-  final hour = now.hour.toString().padLeft(2, '0');
-  final minute = now.minute.toString().padLeft(2, '0');
-  final second = now.second.toString().padLeft(2, '0');
-
-  return '$hour:$minute:$second';
-}
-
-
-  // ─────────────────────────────────────────────────────────
-  // XAU/USD PRICE CARD
-  // ─────────────────────────────────────────────────────────
   Widget _buildPriceCard(DashboardViewModel viewModel) {
     return Container(
       margin: const EdgeInsets.only(top: 20),
@@ -376,10 +350,7 @@ String _getFormattedTime(DateTime now) {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: const Color(0xFFDCFCE7),
                       borderRadius: BorderRadius.circular(6),
@@ -446,9 +417,6 @@ String _getFormattedTime(DateTime now) {
     );
   }
 
-  // ─────────────────────────────────────────────────────────
-  // SECTION HEADER ROW
-  // ─────────────────────────────────────────────────────────
   Widget _buildSectionHeader(
     BuildContext context, {
     required String title,
@@ -482,29 +450,54 @@ String _getFormattedTime(DateTime now) {
     );
   }
 
-  // ─────────────────────────────────────────────────────────
-  // NEWS SECTION
-  // ─────────────────────────────────────────────────────────
   Widget _buildNewsSection(BuildContext context, DashboardViewModel viewModel) {
+    if (viewModel.isLoadingNews) {
+      return SizedBox(
+        height: 208,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: 2,
+          itemBuilder: (context, index) => _buildNewsShimmer(),
+        ),
+      );
+    }
+
+    if (viewModel.newsList.isEmpty) {
+      return SizedBox(
+        height: 208,
+        child: Center(
+          child: Text(
+            viewModel.newsError ?? 'Tidak ada berita saat ini',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.gray,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final newsList = viewModel.newsList.take(5).toList();
+
     return SizedBox(
       height: 208,
-      child: viewModel.isLoadingNews
-          ? ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 2,
-              itemBuilder: (context, index) => _buildNewsShimmer(),
-            )
-          : ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: viewModel.newsList.length,
-              itemBuilder: (context, index) {
-                final item = viewModel.newsList[index];
-                return NewsCard(
-                  item: item,
-                  onTap: () => NewsDetailBottomSheet.show(context, item),
-                );
-              },
-            ),
+      child: PageView.builder(
+        controller: _newsPageController,
+        // Dihapus itemCount-nya agar infinity scroll berfungsi
+        itemBuilder: (context, index) {
+          // Logika Modulo untuk looping data 
+          final realIndex = index % newsList.length;
+          final item = newsList[realIndex];
+
+          return NewsCard(
+            item: item,
+            onTap: () {
+              NewsDetailBottomSheet.show(context, item);
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -548,39 +541,33 @@ String _getFormattedTime(DateTime now) {
     );
   }
 
-  // ─────────────────────────────────────────────────────────
-  // FITUR UTAMA (List style, bukan 2x2 grid)
-  // ─────────────────────────────────────────────────────────
   Widget _buildFeatureList(BuildContext context) {
     final features = [
-      _FeatureItem(
+      const _FeatureItem(
         icon: Icons.diamond_outlined,
         title: 'Kalkulator Emas Fisik',
         subtitle: 'Hitung estimasi keuntungan emas fisik',
         route: AppRoutes.goldCalculator,
         iconColor: AppColors.primary,
-        iconBg: const Color(0xFFFFF3E0),
+        iconBg: Color(0xFFFFF3E0),
       ),
-      _FeatureItem(
+      const _FeatureItem(
         icon: Icons.candlestick_chart_rounded,
         title: 'Analisa Pivot Point',
         subtitle: 'Hitung level support dan resistance',
         route: AppRoutes.pivotPoint,
         iconColor: AppColors.primary,
-        iconBg: const Color(0xFFFFF3E0),
+        iconBg: Color(0xFFFFF3E0),
       ),
-      _FeatureItem(
+      const _FeatureItem(
         icon: Icons.bar_chart_rounded,
         title: 'Grafik Harga Komoditas',
         subtitle: 'Chart live dari TradingView',
         route: AppRoutes.commodityChart,
         iconColor: AppColors.primary,
-        iconBg: const Color(0xFFFFF3E0),
+        iconBg: Color(0xFFFFF3E0),
       ),
-
     ];
-
-
 
     return Container(
       decoration: BoxDecoration(
@@ -617,80 +604,67 @@ String _getFormattedTime(DateTime now) {
     );
   }
 
-  
   Widget _buildSettingsTile(BuildContext context) {
-  return InkWell(
-    onTap: () => Navigator.of(context).pushNamed(AppRoutes.settings),
-    borderRadius: BorderRadius.circular(16),
-    child: Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 14,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
+    return InkWell(
+      onTap: () => Navigator.of(context).pushNamed(AppRoutes.settings),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.settings_rounded,
+                color: Color(0xFF334155),
+                size: 21,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Pengaturan',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Konfigurasi parameter & preferensi',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: Color(0xFF94A3B8),
+            ),
+          ],
         ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.settings_rounded,
-              color: Color(0xFF334155),
-              size: 21,
-            ),
-          ),
+    );
+  }
 
-          const SizedBox(width: 14),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Pengaturan',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Konfigurasi parameter & preferensi',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 14,
-            color: Color(0xFF94A3B8),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-
-  // ─────────────────────────────────────────────────────────
-  // RECENT HISTORY
-  // ─────────────────────────────────────────────────────────
   Widget _buildRecentHistory(BuildContext context) {
     final recent = HistoryService.instance.getRecentCombined(limit: 3);
 
@@ -746,14 +720,11 @@ String _getFormattedTime(DateTime now) {
             tile = _buildHistoryTile(
               context: context,
               isGold: true,
-              title:
-                  'HB \$${g.hb.toStringAsFixed(2)}  |  HJ \$${g.hj.toStringAsFixed(2)}',
+              title: 'HB \$${g.hb.toStringAsFixed(2)}  |  HJ \$${g.hj.toStringAsFixed(2)}',
               subtitle: _formatDateTime(g.timestamp),
               value: _formatCurrencyShort(g.keuntunganBersih),
               isPositive: g.keuntunganBersih >= 0,
-              onTap: () => Navigator.of(
-                context,
-              ).pushNamed(AppRoutes.goldDetail, arguments: g),
+              onTap: () => Navigator.of(context).pushNamed(AppRoutes.goldDetail, arguments: g),
             );
           } else {
             final p = item['entry'] as PivotHistoryEntry;
@@ -765,9 +736,7 @@ String _getFormattedTime(DateTime now) {
               value: p.recommendation,
               isPositive: p.recommendation == 'BUY',
               isNeutral: p.recommendation == 'NEUTRAL',
-              onTap: () => Navigator.of(
-                context,
-              ).pushNamed(AppRoutes.pivotDetail, arguments: p),
+              onTap: () => Navigator.of(context).pushNamed(AppRoutes.pivotDetail, arguments: p),
             );
           }
 
@@ -809,15 +778,11 @@ String _getFormattedTime(DateTime now) {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: isGold
-                    ? const Color(0xFFFFF3E0)
-                    : const Color(0xFFEFF6FF),
+                color: isGold ? const Color(0xFFFFF3E0) : const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                isGold
-                    ? Icons.diamond_outlined
-                    : Icons.candlestick_chart_rounded,
+                isGold ? Icons.diamond_outlined : Icons.candlestick_chart_rounded,
                 size: 20,
                 color: isGold ? AppColors.primary : const Color(0xFF3B82F6),
               ),
@@ -864,18 +829,8 @@ String _getFormattedTime(DateTime now) {
 
   String _formatDateTime(DateTime dt) {
     final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Agu',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
     ];
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
@@ -892,7 +847,7 @@ String _getFormattedTime(DateTime now) {
     }
     return '${value >= 0 ? '+' : '-'}Rp${value.abs().toStringAsFixed(0)}';
   }
-}
+} // <--- INI KURUNG KURAWAL YANG SEBELUMNYA HILANG!
 
 class _FeatureItem {
   const _FeatureItem({

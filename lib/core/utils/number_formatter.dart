@@ -95,9 +95,10 @@ class IndonesianNumberInputFormatter extends TextInputFormatter {
     }
 
     String text = newValue.text;
+    final isDeletion = newValue.text.length < oldValue.text.length;
 
     // Autocorrect jika user ngetik titik (.) padahal format Indo pakai koma (,)
-    if (allowFraction && text.contains('.') && !text.contains(',')) {
+    if (!isDeletion && allowFraction && text.contains('.') && !text.contains(',')) {
       final lastDotIndex = text.lastIndexOf('.');
       final afterDot = text.substring(lastDotIndex + 1);
       if (afterDot.length <= maxFractionDigits) {
@@ -188,9 +189,10 @@ class UsdNumberInputFormatter extends TextInputFormatter {
     }
 
     String text = newValue.text;
+    final isDeletion = newValue.text.length < oldValue.text.length;
 
     // Ubah koma desimal menjadi titik jika diketik di posisi desimal
-    if (allowFraction && text.contains(',') && !text.contains('.')) {
+    if (!isDeletion && allowFraction && text.contains(',') && !text.contains('.')) {
       final lastCommaIndex = text.lastIndexOf(',');
       final afterComma = text.substring(lastCommaIndex + 1);
       if (afterComma.length <= maxFractionDigits) {
@@ -229,9 +231,13 @@ class UsdNumberInputFormatter extends TextInputFormatter {
       formattedText += '.$fractionPart';
     }
 
+    // ===============================================
+    // FIX KURSOR: Pake `text[i]` BUKAN `newValue.text[i]`
+    // ===============================================
     int cursorDigitCount = 0;
-    for (int i = 0; i < newValue.selection.end && i < newValue.text.length; i++) {
-      if (RegExp(r'[\d\.]').hasMatch(newValue.text[i])) {
+    int limit = newValue.selection.end.clamp(0, text.length);
+    for (int i = 0; i < limit; i++) {
+      if (RegExp(r'[\d\.]').hasMatch(text[i])) { 
         cursorDigitCount++;
       }
     }

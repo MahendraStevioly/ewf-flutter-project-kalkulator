@@ -7,13 +7,13 @@ class GoldDetailScreen extends StatelessWidget {
   const GoldDetailScreen({super.key});
 
   String _formatCurrency(double value) {
-    if (value.isNaN || value.isInfinite) return 'Rp0,00';
+    if (value.isNaN || value.isInfinite) return 'Rp0';
     final isNeg = value < 0;
-    final abs = value.abs();
-    final str = abs.toStringAsFixed(2);
-    final parts = str.split('.');
-    final intPart = parts[0].replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
-    return '${isNeg ? '-Rp' : 'Rp'}$intPart,${parts[1]}';
+    final intPart = value.abs().truncate().toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => '.',
+    );
+    return '${isNeg ? '-Rp' : 'Rp'}$intPart';
   }
 
   String _formatUsd(double value) {
@@ -21,7 +21,20 @@ class GoldDetailScreen extends StatelessWidget {
   }
 
   String _formatDateTime(DateTime dt) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '${dt.day} ${months[dt.month - 1]} ${dt.year} • $h:$m';
@@ -60,11 +73,7 @@ class GoldDetailScreen extends StatelessWidget {
             // ── HEADER ───────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Row(
-                children: [
-                  _BackButton(),
-                ],
-              ),
+              child: Row(children: [_BackButton()]),
             ),
             const SizedBox(height: 20),
 
@@ -145,7 +154,9 @@ class GoldDetailScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: isPos ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                        color: isPos
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFFDC2626),
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: Column(
@@ -260,7 +271,12 @@ class GoldDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _divider() => const Divider(height: 0, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16);
+  Widget _divider() => const Divider(
+    height: 0,
+    color: Color(0xFFF1F5F9),
+    indent: 16,
+    endIndent: 16,
+  );
 
   Widget _paramChip({required String label, required String value}) {
     return Column(
