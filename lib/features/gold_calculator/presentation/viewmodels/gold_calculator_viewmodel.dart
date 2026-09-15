@@ -43,10 +43,19 @@ class GoldCalculatorViewModel {
   /// Mendukung format USD (2,700.50) dan IDR (100.000.000,00)
   double? parseFormattedNumber(String? input) {
     if (input == null || input.trim().isEmpty) return null;
-    String cleaned = input.replaceAll('Rp', '').replaceAll('\$', '').replaceAll(' ', '').trim();
+    String cleaned = input
+        .replaceAll('Rp', '')
+        .replaceAll('\$', '')
+        .replaceAll(' ', '')
+        .trim();
     if (cleaned.isEmpty) return null;
     final result = parseDecimal(cleaned);
-    return result == 0 && cleaned != '0' && cleaned != '0.00' && cleaned != '0,00' ? null : result;
+    return result == 0 &&
+            cleaned != '0' &&
+            cleaned != '0.00' &&
+            cleaned != '0,00'
+        ? null
+        : result;
   }
 
   /// Validasi input values
@@ -71,10 +80,6 @@ class GoldCalculatorViewModel {
       return false;
     }
 
-    if (modal == null || modal <= 0) {
-      errorMessage = 'Modal Awal harus berupa angka positif';
-      return false;
-    }
 
     if (kurs <= 0) {
       errorMessage = 'Kurs USD/IDR harus berupa angka positif';
@@ -105,15 +110,15 @@ class GoldCalculatorViewModel {
       final modal = parseFormattedNumber(modalAwalInput)!;
       final kurs = parseFormattedNumber(kursUsdIdrInput) ?? 18000.0;
 
-      modalAwal = modal;
-      kursUsdIdr = kurs;
+      modalAwal = modal.truncateToDouble();
+      kursUsdIdr = kurs.truncateToDouble();
 
       // Hitungan berdasarkan formula
-      final hhb = (hb * kursUsdIdr) / konversiTozG;
-      final hhj = (hj * kursUsdIdr) / konversiTozG;
-      final selisih = hhj - hhb;
+      final hhb = ((hb * kursUsdIdr) / konversiTozG).truncateToDouble();
+      final hhj = ((hj * kursUsdIdr) / konversiTozG).truncateToDouble();
+      final selisih = (hhj - hhb).truncateToDouble();
       final gramEmas = modalAwal / hhb;
-      final keuntunganBersih = gramEmas * selisih;
+      final keuntunganBersih = (gramEmas * selisih).truncateToDouble();
 
       hasil = {
         'hb': hb,
@@ -136,20 +141,16 @@ class GoldCalculatorViewModel {
     isCalculating = false;
   }
 
-  /// Format rupiah (2 desimal tanpa pembulatan / dipotong desimalnya)
+  /// Format rupiah tanpa pecahan desimal.
   String formatCurrency(double value) {
-    if (value.isNaN || value.isInfinite) return 'Rp0,00';
+    if (value.isNaN || value.isInfinite) return 'Rp0';
     final isNegative = value < 0;
-    final absVal = value.abs();
-    final str = absVal.toStringAsFixed(8);
-    final parts = str.split('.');
-    final intPart = parts[0].replaceAllMapped(
+    final intPart = value.abs().truncate().toString().replaceAllMapped(
       RegExp(r'\B(?=(\d{3})+(?!\d))'),
       (match) => '.',
     );
-    final decPart = parts[1].substring(0, 2);
     final prefix = isNegative ? '-Rp' : 'Rp';
-    return '$prefix$intPart,$decPart';
+    return '$prefix$intPart';
   }
 
   /// Format gram (2 desimal tanpa pembulatan / dipotong desimalnya)

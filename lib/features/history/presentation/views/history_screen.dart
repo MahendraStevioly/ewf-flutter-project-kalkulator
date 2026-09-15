@@ -60,7 +60,9 @@ class _HistoryScreenState extends State<HistoryScreen>
                         context: context,
                         builder: (_) => AlertDialog(
                           title: const Text('Hapus Semua Riwayat'),
-                          content: const Text('Semua riwayat perhitungan akan dihapus. Lanjutkan?'),
+                          content: const Text(
+                            'Semua riwayat perhitungan akan dihapus. Lanjutkan?',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
@@ -72,13 +74,19 @@ class _HistoryScreenState extends State<HistoryScreen>
                                 Navigator.pop(context);
                                 setState(() {});
                               },
-                              child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                              child: const Text(
+                                'Hapus',
+                                style: TextStyle(color: Colors.red),
+                              ),
                             ),
                           ],
                         ),
                       );
                     },
-                    icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFF94A3B8)),
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Color(0xFF94A3B8),
+                    ),
                   ),
                 ],
               ),
@@ -132,7 +140,10 @@ class _HistoryScreenState extends State<HistoryScreen>
                           if (goldHistory.isNotEmpty) ...[
                             const SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 1,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.primary.withAlpha(40),
                                 borderRadius: BorderRadius.circular(10),
@@ -160,7 +171,10 @@ class _HistoryScreenState extends State<HistoryScreen>
                           if (pivotHistory.isNotEmpty) ...[
                             const SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 1,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF3B82F6).withAlpha(40),
                                 borderRadius: BorderRadius.circular(10),
@@ -192,17 +206,15 @@ class _HistoryScreenState extends State<HistoryScreen>
                 children: [
                   _GoldHistoryTab(
                     goldHistory: goldHistory,
-                    onTap: (entry) => Navigator.of(context).pushNamed(
-                      AppRoutes.goldDetail,
-                      arguments: entry,
-                    ),
+                    onTap: (entry) => Navigator.of(
+                      context,
+                    ).pushNamed(AppRoutes.goldDetail, arguments: entry),
                   ),
                   _PivotHistoryTab(
                     pivotHistory: pivotHistory,
-                    onTap: (entry) => Navigator.of(context).pushNamed(
-                      AppRoutes.pivotDetail,
-                      arguments: entry,
-                    ),
+                    onTap: (entry) => Navigator.of(
+                      context,
+                    ).pushNamed(AppRoutes.pivotDetail, arguments: entry),
                   ),
                 ],
               ),
@@ -298,7 +310,11 @@ class _GoldHistoryTab extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFFCBD5E1)),
+                        const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 14,
+                          color: Color(0xFFCBD5E1),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -319,7 +335,9 @@ class _GoldHistoryTab extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: isPos ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                            color: isPos
+                                ? const Color(0xFF16A34A)
+                                : const Color(0xFFDC2626),
                           ),
                         ),
                       ],
@@ -335,7 +353,20 @@ class _GoldHistoryTab extends StatelessWidget {
   }
 
   String _formatDateTime(DateTime dt) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '${dt.day} ${months[dt.month - 1]} ${dt.year} • $h:$m';
@@ -343,11 +374,11 @@ class _GoldHistoryTab extends StatelessWidget {
 
   String _formatCurrency(double value) {
     final isNeg = value < 0;
-    final abs = value.abs();
-    final str = abs.toStringAsFixed(2);
-    final parts = str.split('.');
-    final intPart = parts[0].replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
-    return '${isNeg ? '-' : ''}Rp$intPart,${parts[1]}';
+    final intPart = value.abs().truncate().toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => '.',
+    );
+    return '${isNeg ? '-' : ''}Rp$intPart';
   }
 }
 
@@ -429,7 +460,10 @@ class _PivotHistoryTab extends StatelessWidget {
                             children: [
                               Text(
                                 _formatDateTime(entry.timestamp),
-                                style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF94A3B8),
+                                ),
                               ),
                               const SizedBox(height: 2),
                               Text(
@@ -443,7 +477,11 @@ class _PivotHistoryTab extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFFCBD5E1)),
+                        const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 14,
+                          color: Color(0xFFCBD5E1),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -454,10 +492,17 @@ class _PivotHistoryTab extends StatelessWidget {
                       children: [
                         Text(
                           'PP ${entry.pp.toStringAsFixed(2)}',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0F172A),
+                          ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: _signalBg(entry.recommendation),
                             borderRadius: BorderRadius.circular(8),
@@ -484,7 +529,20 @@ class _PivotHistoryTab extends StatelessWidget {
   }
 
   String _formatDateTime(DateTime dt) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '${dt.day} ${months[dt.month - 1]} ${dt.year} • $h:$m';

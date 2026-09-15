@@ -9,13 +9,13 @@ class GoldCalculatorResultView extends StatelessWidget {
   const GoldCalculatorResultView({super.key});
 
   String _formatCurrency(double value) {
-    if (value.isNaN || value.isInfinite) return 'Rp0,00';
+    if (value.isNaN || value.isInfinite) return 'Rp0';
     final isNeg = value < 0;
-    final abs = value.abs();
-    final str = abs.toStringAsFixed(2);
-    final parts = str.split('.');
-    final intPart = parts[0].replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
-    return '${isNeg ? '-Rp' : 'Rp'}$intPart,${parts[1]}';
+    final intPart = value.abs().truncate().toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => '.',
+    );
+    return '${isNeg ? '-Rp' : 'Rp'}$intPart';
   }
 
   String _formatGram(double value) {
@@ -23,7 +23,10 @@ class GoldCalculatorResultView extends StatelessWidget {
     final abs = value.abs();
     final str = abs.toStringAsFixed(2);
     final parts = str.split('.');
-    final intPart = parts[0].replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
+    final intPart = parts[0].replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => '.',
+    );
     return '$intPart,${parts[1]} gram';
   }
 
@@ -58,7 +61,8 @@ class GoldCalculatorResultView extends StatelessWidget {
     final hhj = (arguments['hhj'] as num?)?.toDouble() ?? 0.0;
     final selisih = (arguments['selisih'] as num?)?.toDouble() ?? 0.0;
     final gramEmas = (arguments['gramEmas'] as num?)?.toDouble() ?? 0.0;
-    final keuntunganBersih = (arguments['keuntunganBersih'] as num?)?.toDouble() ?? 0.0;
+    final keuntunganBersih =
+        (arguments['keuntunganBersih'] as num?)?.toDouble() ?? 0.0;
     final isPos = keuntunganBersih >= 0;
 
     return Scaffold(
@@ -91,7 +95,10 @@ class GoldCalculatorResultView extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       _formatDateTimeNow(),
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF94A3B8),
+                      ),
                     ),
                     const SizedBox(height: 24),
 
@@ -101,22 +108,44 @@ class GoldCalculatorResultView extends StatelessWidget {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 12, offset: const Offset(0, 3)),
+                          BoxShadow(
+                            color: Colors.black.withAlpha(8),
+                            blurRadius: 12,
+                            offset: const Offset(0, 3),
+                          ),
                         ],
                       ),
                       child: Column(
                         children: [
-                          _resultRow('Harga Beli (HB)', '\$${hb.toStringAsFixed(2)}'),
+                          _resultRow(
+                            'Harga Beli (HB)',
+                            '\$${hb.toStringAsFixed(2)}',
+                          ),
                           _divider(),
-                          _resultRow('Harga Jual (HJ)', '\$${hj.toStringAsFixed(2)}'),
+                          _resultRow(
+                            'Harga Jual (HJ)',
+                            '\$${hj.toStringAsFixed(2)}',
+                          ),
                           _divider(),
-                          _resultRow('Harga Hitung Beli (HHB)', '${_formatCurrency(hhb)} / gram'),
+                          _resultRow(
+                            'Harga Hitung Beli (HHB)',
+                            '${_formatCurrency(hhb)} / gram',
+                          ),
                           _divider(),
-                          _resultRow('Harga Hitung Jual (HHJ)', '${_formatCurrency(hhj)} / gram'),
+                          _resultRow(
+                            'Harga Hitung Jual (HHJ)',
+                            '${_formatCurrency(hhj)} / gram',
+                          ),
                           _divider(),
-                          _resultRow('Selisih Harga', '${_formatCurrency(selisih)} / gram'),
+                          _resultRow(
+                            'Selisih Harga',
+                            '${_formatCurrency(selisih)} / gram',
+                          ),
                           _divider(),
-                          _resultRow('Estimasi Gram Emas', _formatGram(gramEmas)),
+                          _resultRow(
+                            'Estimasi Gram Emas',
+                            _formatGram(gramEmas),
+                          ),
                         ],
                       ),
                     ),
@@ -128,7 +157,9 @@ class GoldCalculatorResultView extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: isPos ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                        color: isPos
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFFDC2626),
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: Column(
@@ -170,14 +201,29 @@ class GoldCalculatorResultView extends StatelessWidget {
                         children: [
                           const Text(
                             'PARAMETER DIGUNAKAN',
-                            style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w700, letterSpacing: 0.6),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.6,
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Row(
                             children: [
-                              Expanded(child: _paramChip('Modal Awal', _formatCurrency(modalAwal))),
+                              Expanded(
+                                child: _paramChip(
+                                  'Modal Awal',
+                                  _formatCurrency(modalAwal),
+                                ),
+                              ),
                               const SizedBox(width: 8),
-                              Expanded(child: _paramChip('Kurs USD', _formatCurrency(kurs))),
+                              Expanded(
+                                child: _paramChip(
+                                  'Kurs USD',
+                                  _formatCurrency(kurs),
+                                ),
+                              ),
                               const SizedBox(width: 8),
                               Expanded(child: _paramChip('TOZ', '31.1')),
                             ],
@@ -209,14 +255,19 @@ class GoldCalculatorResultView extends StatelessWidget {
                           backgroundColor: const Color(0xFF0F172A),
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.bookmark_rounded, size: 18),
                             SizedBox(width: 8),
-                            Text('Simpan ke Riwayat', style: TextStyle(fontWeight: FontWeight.w700)),
+                            Text(
+                              'Simpan ke Riwayat',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
                           ],
                         ),
                       ),
@@ -230,23 +281,35 @@ class GoldCalculatorResultView extends StatelessWidget {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF0F172A),
                               side: const BorderSide(color: Color(0xFFE2E8F0)),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                               backgroundColor: Colors.white,
                             ),
-                            child: const Text('Hitung Ulang', style: TextStyle(fontWeight: FontWeight.w600)),
+                            child: const Text(
+                              'Hitung Ulang',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () => Navigator.of(context).pushReplacementNamed(AppRoutes.goldCalculator),
+                            onPressed: () => Navigator.of(
+                              context,
+                            ).pushReplacementNamed(AppRoutes.goldCalculator),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF0F172A),
                               side: const BorderSide(color: Color(0xFFE2E8F0)),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                               backgroundColor: Colors.white,
                             ),
-                            child: const Text('Reset', style: TextStyle(fontWeight: FontWeight.w600)),
+                            child: const Text(
+                              'Reset',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
                           ),
                         ),
                       ],
@@ -262,7 +325,11 @@ class GoldCalculatorResultView extends StatelessWidget {
                       ),
                       child: const Text(
                         'Perhitungan berdasarkan spread pasar. Pastikan konfirmasi dengan kantor cabang sebelum transaksi.',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), height: 1.5),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF94A3B8),
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -308,29 +375,70 @@ class GoldCalculatorResultView extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)))),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F172A),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _divider() => const Divider(height: 0, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16);
+  Widget _divider() => const Divider(
+    height: 0,
+    color: Color(0xFFF1F5F9),
+    indent: 16,
+    endIndent: 16,
+  );
 
   Widget _paramChip(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+        ),
         const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)), overflow: TextOverflow.ellipsis),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF0F172A),
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
       ],
     );
   }
 
   String _formatDateTimeNow() {
     final now = DateTime.now();
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
     final h = now.hour.toString().padLeft(2, '0');
     final m = now.minute.toString().padLeft(2, '0');
     return '${now.day} ${months[now.month - 1]} ${now.year} • $h:$m';
@@ -349,10 +457,18 @@ class _BackButton extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
-            BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 6, offset: const Offset(0, 1)),
+            BoxShadow(
+              color: Colors.black.withAlpha(10),
+              blurRadius: 6,
+              offset: const Offset(0, 1),
+            ),
           ],
         ),
-        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Color(0xFF0F172A)),
+        child: const Icon(
+          Icons.arrow_back_ios_new_rounded,
+          size: 16,
+          color: Color(0xFF0F172A),
+        ),
       ),
     );
   }

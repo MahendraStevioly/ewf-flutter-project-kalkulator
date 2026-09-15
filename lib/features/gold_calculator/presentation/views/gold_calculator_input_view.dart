@@ -17,7 +17,9 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
   late GoldCalculatorViewModel viewModel;
   final TextEditingController hbController = TextEditingController(text: '');
   final TextEditingController hjController = TextEditingController(text: '');
-  final TextEditingController modalController = TextEditingController(text: '');
+  final TextEditingController modalController = TextEditingController(
+    text: '100.000.000',
+  );
   final TextEditingController kursController = TextEditingController(text: '18.000');
   bool showParameterDetail = false;
   bool isFetchingRate = false;
@@ -71,6 +73,23 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
         arguments: viewModel.hasil,
       );
     }
+  }
+
+  String _getFormattedModalChip() {
+    // 1. Ambil teks dari controller dan ubah jadi angka
+    final modalValue = viewModel.parseFormattedNumber(modalController.text) ?? 0.0;
+
+    // 2. Jika nilainya mencapai jutaan, ubah ke format "jt"
+    if (modalValue >= 1000000) {
+      final formatJt = modalValue / 1000000;
+      // Cek apakah angkanya bulat (contoh: 110 jt) atau ada desimal (contoh: 110.5 jt)
+      return formatJt == formatJt.truncateToDouble()
+          ? 'Rp ${formatJt.toStringAsFixed(0)} jt'
+          : 'Rp ${formatJt.toStringAsFixed(1)} jt';
+    }
+
+    // 3. Jika di bawah 1 juta (atau kosong), kembalikan ke format Rupiah standar
+    return viewModel.formatCurrency(modalValue);
   }
 
   @override
@@ -128,7 +147,7 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                             blurRadius: 12,
                             offset: const Offset(0, 3),
                           ),
-                        ],
+                        ], 
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(18),
@@ -142,7 +161,7 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                               controller: hbController,
                               hint: '4100.00',
                               prefix: '\$',
-                              formatter: UsdNumberInputFormatter(allowFraction: true),
+                              formatter: UsdNumberInputFormatter(allowFraction: false),
                             ),
                             const SizedBox(height: 20),
 
@@ -153,19 +172,10 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                               controller: hjController,
                               hint: '4130.00',
                               prefix: '\$',
-                              formatter: UsdNumberInputFormatter(allowFraction: true),
+                              formatter: UsdNumberInputFormatter(allowFraction: false),
                             ),
                             const SizedBox(height: 20),
 
-                            // Modal Field
-                            _buildFieldLabel('MODAL AWAL', 'IDR'),
-                            const SizedBox(height: 8),
-                            _buildTextField(
-                              controller: modalController,
-                              hint: '100.000.000',
-                              prefix: 'Rp',
-                              formatter: IndonesianNumberInputFormatter(allowFraction: false),
-                            ),
                           ],
                         ),
                       ),
@@ -190,7 +200,7 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                         children: [
                           // Header row (always visible)
                           InkWell(
-                            onTap: () => setState(() => showParameterDetail = !showParameterDetail),
+                            onTap: null,
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -208,7 +218,7 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                                   const Spacer(),
                                   Row(
                                     children: [
-                                      _miniParamChip('Modal', 'Rp 100 jt'),
+                                      _miniParamChip('Modal', _getFormattedModalChip()),
                                       const SizedBox(width: 6),
                                       _miniParamChip('Kurs', isFetchingRate ? '...' : 'Rp ${kursController.text}'),
                                       const SizedBox(width: 6),
@@ -217,6 +227,9 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                                   ),
                                   const SizedBox(width: 8),
                                   GestureDetector(
+                                    onTap: () => setState(
+                                      () => showParameterDetail = !showParameterDetail,
+                                    ),
                                     child: Text(
                                       showParameterDetail ? 'Tutup' : 'Edit',
                                       style: const TextStyle(
@@ -239,6 +252,18 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  _buildFieldLabel('MODAL AWAL', 'IDR'),
+                                  const SizedBox(height: 8),
+                                  _buildTextField(
+                                    controller: modalController,
+                                    hint: '100.000.000',
+                                    prefix: 'Rp',
+                                    formatter: IndonesianNumberInputFormatter(
+                                      allowFraction: false,
+                                    ),
+                                    onChanged: (_) => setState(() {}),
+                                  ),
+                                  const SizedBox(height: 14),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
@@ -288,7 +313,7 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                                     controller: kursController,
                                     hint: '18.000',
                                     prefix: 'Rp',
-                                    formatter: IndonesianNumberInputFormatter(allowFraction: true),
+                                    formatter: IndonesianNumberInputFormatter(allowFraction: false),
                                   ),
                                   const SizedBox(height: 12),
                                   _paramRow('KONVERSI TOZ', '${viewModel.konversiTozG.toStringAsFixed(1)} gram / troy oz'),
@@ -309,7 +334,7 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                       child: ElevatedButton(
                         onPressed: _handleCalculate,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: AppColors.primary, // Hanya 1 warna utama
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shadowColor: AppColors.primary.withAlpha(80),
@@ -319,7 +344,11 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                         ),
                         child: const Text(
                           'HITUNG KEUNTUNGAN',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 0.8),
+                          style: TextStyle(
+                            fontSize: 15, 
+                            fontWeight: FontWeight.w800, 
+                            letterSpacing: 0.8,
+                          ),
                         ),
                       ),
                     ),
@@ -360,6 +389,7 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
     required String hint,
     required String prefix,
     required dynamic formatter,
+    ValueChanged<String>? onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -367,6 +397,7 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
       ),
       child: TextField(
         controller: controller,
+        onChanged: onChanged,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: [formatter],
         style: const TextStyle(

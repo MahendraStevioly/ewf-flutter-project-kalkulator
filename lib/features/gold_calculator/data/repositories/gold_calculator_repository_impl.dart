@@ -12,11 +12,11 @@ class GoldCalculatorRepositoryImpl implements GoldCalculatorRepository {
     required double toz,
     required double modal,
   }) {
-    final hhb = hb * kurs / toz;
-    final hhj = hj * kurs / toz;
-    final selisih = hhj - hhb;
+    final hhb = (hb * kurs / toz).truncateToDouble();
+    final hhj = (hj * kurs / toz).truncateToDouble();
+    final selisih = (hhj - hhb).truncateToDouble();
     final gramEmas = modal / hhb;
-    final keuntunganBersih = gramEmas * selisih;
+    final keuntunganBersih = (gramEmas * selisih).truncateToDouble();
 
     return PhysicalGoldCalculation(
       hb: hb,
