@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_item.dart';
 
 class NewsDetailBottomSheet extends StatelessWidget {
@@ -69,9 +69,9 @@ class NewsDetailBottomSheet extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.82,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.cardBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -83,7 +83,7 @@ class NewsDetailBottomSheet extends StatelessWidget {
               width: 44,
               height: 5,
               decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
+                color: context.borderColor,
                 borderRadius: BorderRadius.circular(3),
               ),
             ),
@@ -106,7 +106,7 @@ class NewsDetailBottomSheet extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => Container(
                         height: 140,
-                        color: const Color(0xFFE2E8F0),
+                        color: context.isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                         child: const Center(
                           child: Icon(Icons.newspaper_rounded, size: 48, color: AppColors.gray),
                         ),
@@ -122,13 +122,15 @@ class NewsDetailBottomSheet extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF3E0),
+                          color: context.isDarkMode
+                              ? AppColors.primary.withAlpha(30)
+                              : const Color(0xFFFFF3E0),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(
-                          item.category,
-                          style: const TextStyle(
-                            color: Color(0xFFF7941D),
+                        child: const Text(
+                          'Berita Emas',
+                          style: TextStyle(
+                            color: AppColors.primary,
                             fontWeight: FontWeight.w700,
                             fontSize: 12,
                           ),
@@ -136,12 +138,12 @@ class NewsDetailBottomSheet extends StatelessWidget {
                       ),
                       Row(
                         children: [
-                          const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF64748B)),
+                          Icon(Icons.access_time_rounded, size: 14, color: context.textMuted),
                           const SizedBox(width: 4),
                           Text(
                             item.timeAgo,
-                            style: const TextStyle(
-                              color: Color(0xFF64748B),
+                            style: TextStyle(
+                              color: context.textMuted,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
@@ -155,10 +157,10 @@ class NewsDetailBottomSheet extends StatelessWidget {
                   // Headline Title
                   Text(
                     item.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                      color: context.textPrimary,
                       height: 1.3,
                     ),
                   ),
@@ -167,12 +169,12 @@ class NewsDetailBottomSheet extends StatelessWidget {
                   // Source info
                   Row(
                     children: [
-                      const Icon(Icons.verified_outlined, size: 15, color: Color(0xFF64748B)),
+                      Icon(Icons.verified_outlined, size: 15, color: context.textMuted),
                       const SizedBox(width: 6),
                       Text(
                         'Sumber: ${item.source}',
-                        style: const TextStyle(
-                          color: Color(0xFF64748B),
+                        style: TextStyle(
+                          color: context.textMuted,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -186,9 +188,9 @@ class NewsDetailBottomSheet extends StatelessWidget {
                     item.snippet.isNotEmpty
                         ? item.snippet
                         : 'Simak perkembangan komoditas emas, sentimen makroekonomi, dan analisis teknikal harga emas spot global (XAU/USD) melalui tautan berita resmi.',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF334155),
+                      color: context.textSecondary,
                       height: 1.6,
                     ),
                   ),
@@ -201,9 +203,9 @@ class NewsDetailBottomSheet extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardBg,
               border: Border(
-                top: BorderSide(color: Colors.grey.withAlpha(40)),
+                top: BorderSide(color: context.borderColor),
               ),
             ),
             child: SizedBox(
@@ -212,7 +214,7 @@ class NewsDetailBottomSheet extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () => _openNewsWebsite(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E293B),
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(

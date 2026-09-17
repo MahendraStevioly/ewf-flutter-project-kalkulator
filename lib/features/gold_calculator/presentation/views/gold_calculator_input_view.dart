@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/number_formatter.dart';
 import '../viewmodels/gold_calculator_viewmodel.dart';
 
@@ -95,7 +95,7 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F7),
+      backgroundColor: context.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -117,20 +117,20 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Title
-                    const Text(
+                    Text(
                       'Kalkulator Emas Fisik',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Simulasi perhitungan keuntungan investasi emas fisik berdasarkan harga pasar.',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF64748B),
+                        color: context.textSecondary,
                         height: 1.4,
                       ),
                     ),
@@ -139,14 +139,16 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                     // ── INPUT FIELDS CARD ───────────────────────────────
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: context.borderColor),
                         boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(8),
-                            blurRadius: 12,
-                            offset: const Offset(0, 3),
-                          ),
+                          if (!context.isDarkMode)
+                            BoxShadow(
+                              color: Colors.black.withAlpha(8),
+                              blurRadius: 12,
+                              offset: const Offset(0, 3),
+                            ),
                         ], 
                       ),
                       child: Padding(
@@ -155,9 +157,10 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // HB Field
-                            _buildFieldLabel('HARGA BELI (HB)', 'USD / troy oz'),
+                            _buildFieldLabel('HARGA BELI (HB)', 'USD / troy oz', context),
                             const SizedBox(height: 8),
                             _buildTextField(
+                              context: context,
                               controller: hbController,
                               hint: '4100.00',
                               prefix: '\$',
@@ -166,9 +169,10 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                             const SizedBox(height: 20),
 
                             // HJ Field
-                            _buildFieldLabel('HARGA JUAL (HJ)', 'USD / troy oz'),
+                            _buildFieldLabel('HARGA JUAL (HJ)', 'USD / troy oz', context),
                             const SizedBox(height: 8),
                             _buildTextField(
+                              context: context,
                               controller: hjController,
                               hint: '4130.00',
                               prefix: '\$',
@@ -186,14 +190,16 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                     // ── PARAMETER DASAR ─────────────────────────────────
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: context.borderColor),
                         boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(8),
-                            blurRadius: 12,
-                            offset: const Offset(0, 3),
-                          ),
+                          if (!context.isDarkMode)
+                            BoxShadow(
+                              color: Colors.black.withAlpha(8),
+                              blurRadius: 12,
+                              offset: const Offset(0, 3),
+                            ),
                         ],
                       ),
                       child: Column(
@@ -206,23 +212,23 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                               child: Row(
                                 children: [
-                                  const Text(
+                                  Text(
                                     'PARAMETER DASAR',
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF64748B),
+                                      color: context.textSecondary,
                                       letterSpacing: 0.6,
                                     ),
                                   ),
                                   const Spacer(),
                                   Row(
                                     children: [
-                                      _miniParamChip('Modal', _getFormattedModalChip()),
+                                      _miniParamChip('Modal', _getFormattedModalChip(), context),
                                       const SizedBox(width: 6),
-                                      _miniParamChip('Kurs', isFetchingRate ? '...' : 'Rp ${kursController.text}'),
+                                      _miniParamChip('Kurs', isFetchingRate ? '...' : 'Rp ${kursController.text}', context),
                                       const SizedBox(width: 6),
-                                      _miniParamChip('TOZ', '31.1'),
+                                      _miniParamChip('TOZ', '31.1', context),
                                     ],
                                   ),
                                   const SizedBox(width: 8),
@@ -246,15 +252,16 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
 
                           // Expandable detail
                           if (showParameterDetail) ...[
-                            const Divider(height: 0, color: Color(0xFFF1F5F9)),
+                            Divider(height: 0, color: context.dividerColor),
                             Padding(
                               padding: const EdgeInsets.all(16),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _buildFieldLabel('MODAL AWAL', 'IDR'),
+                                  _buildFieldLabel('MODAL AWAL', 'IDR', context),
                                   const SizedBox(height: 8),
                                   _buildTextField(
+                                    context: context,
                                     controller: modalController,
                                     hint: '100.000.000',
                                     prefix: 'Rp',
@@ -267,12 +274,12 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'KURS USD/IDR',
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
-                                          color: Color(0xFF64748B),
+                                          color: context.textSecondary,
                                         ),
                                       ),
                                       Row(
@@ -310,13 +317,14 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                                   ),
                                   const SizedBox(height: 8),
                                   _buildTextField(
+                                    context: context,
                                     controller: kursController,
                                     hint: '18.000',
                                     prefix: 'Rp',
                                     formatter: IndonesianNumberInputFormatter(allowFraction: false),
                                   ),
                                   const SizedBox(height: 12),
-                                  _paramRow('KONVERSI TOZ', '${viewModel.konversiTozG.toStringAsFixed(1)} gram / troy oz'),
+                                  _paramRow('KONVERSI TOZ', '${viewModel.konversiTozG.toStringAsFixed(1)} gram / troy oz', context),
                                 ],
                               ),
                             ),
@@ -334,7 +342,7 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
                       child: ElevatedButton(
                         onPressed: _handleCalculate,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary, // Hanya 1 warna utama
+                          backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shadowColor: AppColors.primary.withAlpha(80),
@@ -363,28 +371,29 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
     );
   }
 
-  Widget _buildFieldLabel(String label, String unit) {
+  Widget _buildFieldLabel(String label, String unit, BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF64748B),
+            color: context.textSecondary,
             letterSpacing: 0.5,
           ),
         ),
         Text(
           unit,
-          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+          style: TextStyle(fontSize: 11, color: context.textMuted),
         ),
       ],
     );
   }
 
   Widget _buildTextField({
+    required BuildContext context,
     required TextEditingController controller,
     required String hint,
     required String prefix,
@@ -393,30 +402,30 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        border: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.5)),
+        border: Border(bottom: BorderSide(color: context.borderColor, width: 1.5)),
       ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: [formatter],
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF0F172A),
+          color: context.textPrimary,
         ),
         decoration: InputDecoration(
           prefixText: prefix.isNotEmpty ? '$prefix ' : null,
-          prefixStyle: const TextStyle(
+          prefixStyle: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Color(0xFFCBD5E1),
+            color: context.textMuted,
           ),
           hintText: hint,
-          hintStyle: const TextStyle(
+          hintStyle: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Color(0xFFCBD5E1),
+            color: context.textMuted,
           ),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
@@ -427,38 +436,38 @@ class _GoldCalculatorInputViewState extends State<GoldCalculatorInputView> {
     );
   }
 
-  Widget _miniParamChip(String label, String value) {
+  Widget _miniParamChip(String label, String value, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(label, style: const TextStyle(fontSize: 9, color: Color(0xFF94A3B8))),
+        Text(label, style: TextStyle(fontSize: 9, color: context.textMuted)),
         Text(
           value,
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: context.textPrimary),
           overflow: TextOverflow.ellipsis,
         ),
       ],
     );
   }
 
-  Widget _paramRow(String label, String value) {
+  Widget _paramRow(String label, String value, BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF64748B),
+            color: context.textSecondary,
           ),
         ),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: context.textPrimary,
           ),
         ),
       ],
@@ -475,13 +484,14 @@ class _BackButton extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: context.borderColor),
           boxShadow: [
             BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 6, offset: const Offset(0, 1)),
           ],
         ),
-        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Color(0xFF0F172A)),
+        child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: context.textPrimary),
       ),
     );
   }

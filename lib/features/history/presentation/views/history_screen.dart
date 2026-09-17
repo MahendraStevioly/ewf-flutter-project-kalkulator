@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/history_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -33,7 +34,7 @@ class _HistoryScreenState extends State<HistoryScreen>
     final pivotHistory = HistoryService.instance.pivotHistory;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F7),
+      backgroundColor: context.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -44,13 +45,13 @@ class _HistoryScreenState extends State<HistoryScreen>
                 children: [
                   _BackButton(),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Riwayat Transaksi',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        color: context.textPrimary,
                       ),
                     ),
                   ),
@@ -59,14 +60,19 @@ class _HistoryScreenState extends State<HistoryScreen>
                       showDialog(
                         context: context,
                         builder: (_) => AlertDialog(
-                          title: const Text('Hapus Semua Riwayat'),
-                          content: const Text(
+                          backgroundColor: context.cardBg,
+                          title: Text(
+                            'Hapus Semua Riwayat',
+                            style: TextStyle(color: context.textPrimary),
+                          ),
+                          content: Text(
                             'Semua riwayat perhitungan akan dihapus. Lanjutkan?',
+                            style: TextStyle(color: context.textSecondary),
                           ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text('Batal'),
+                              child: Text('Batal', style: TextStyle(color: context.textMuted)),
                             ),
                             TextButton(
                               onPressed: () {
@@ -76,16 +82,16 @@ class _HistoryScreenState extends State<HistoryScreen>
                               },
                               child: const Text(
                                 'Hapus',
-                                style: TextStyle(color: Colors.red),
+                                style: TextStyle(color: AppColors.negative),
                               ),
                             ),
                           ],
                         ),
                       );
                     },
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.delete_outline_rounded,
-                      color: Color(0xFF94A3B8),
+                      color: context.textMuted,
                     ),
                   ),
                 ],
@@ -101,26 +107,28 @@ class _HistoryScreenState extends State<HistoryScreen>
                 height: 44,
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
+                  color: context.isDarkMode ? AppColors.darkSurface : const Color(0xFFE2E8F0),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: TabBar(
                   controller: _tabController,
                   indicator: BoxDecoration(
-                    color: Colors.white,
+                    color: context.isDarkMode ? AppColors.darkBorder : Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(15),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
+                      // Bayangan tab hanya muncul di mode terang
+                      if (!context.isDarkMode)
+                        BoxShadow(
+                          color: Colors.black.withAlpha(15),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
                     ],
                   ),
                   indicatorSize: TabBarIndicatorSize.tab,
                   dividerColor: Colors.transparent,
-                  labelColor: const Color(0xFF0F172A),
-                  unselectedLabelColor: const Color(0xFF64748B),
+                  labelColor: context.textPrimary,
+                  unselectedLabelColor: context.textSecondary,
                   labelStyle: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
@@ -236,7 +244,7 @@ class _GoldHistoryTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (goldHistory.isEmpty) {
-      return _EmptyState(
+      return const _EmptyState(
         icon: Icons.diamond_outlined,
         message: 'Belum ada riwayat\nKalkulator Emas Fisik.',
       );
@@ -251,14 +259,16 @@ class _GoldHistoryTab extends StatelessWidget {
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: context.borderColor),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(6),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
+              if (!context.isDarkMode)
+                BoxShadow(
+                  color: Colors.black.withAlpha(6),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
             ],
           ),
           child: Material(
@@ -277,7 +287,9 @@ class _GoldHistoryTab extends StatelessWidget {
                           width: 38,
                           height: 38,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFF3E0),
+                            color: context.isDarkMode
+                                ? AppColors.primary.withAlpha(35)
+                                : const Color(0xFFFFF3E0),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
@@ -293,41 +305,41 @@ class _GoldHistoryTab extends StatelessWidget {
                             children: [
                               Text(
                                 _formatDateTime(entry.timestamp),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF94A3B8),
+                                  color: context.textMuted,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 'HB \$${entry.hb.toStringAsFixed(2)}   |   HJ \$${entry.hj.toStringAsFixed(2)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
+                                  color: context.textPrimary,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.arrow_forward_ios_rounded,
                           size: 14,
-                          color: Color(0xFFCBD5E1),
+                          color: context.textMuted,
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    const Divider(height: 0, color: Color(0xFFF1F5F9)),
+                    Divider(height: 0, color: context.dividerColor),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Net Profit',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: context.textSecondary,
                           ),
                         ),
                         Text(
@@ -354,18 +366,7 @@ class _GoldHistoryTab extends StatelessWidget {
 
   String _formatDateTime(DateTime dt) {
     final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Agu',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
     ];
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
@@ -395,16 +396,20 @@ class _PivotHistoryTab extends StatelessWidget {
     return const Color(0xFF64748B);
   }
 
-  Color _signalBg(String rec) {
-    if (rec == 'BUY') return const Color(0xFFDCFCE7);
-    if (rec == 'SELL') return const Color(0xFFFEE2E2);
-    return const Color(0xFFF1F5F9);
+  Color _signalBg(String rec, BuildContext context) {
+    if (rec == 'BUY') {
+      return context.isDarkMode ? const Color(0xFF16A34A).withAlpha(40) : const Color(0xFFDCFCE7);
+    }
+    if (rec == 'SELL') {
+      return context.isDarkMode ? const Color(0xFFDC2626).withAlpha(40) : const Color(0xFFFEE2E2);
+    }
+    return context.isDarkMode ? const Color(0xFF334155) : const Color(0xFFF1F5F9);
   }
 
   @override
   Widget build(BuildContext context) {
     if (pivotHistory.isEmpty) {
-      return _EmptyState(
+      return const _EmptyState(
         icon: Icons.candlestick_chart_rounded,
         message: 'Belum ada riwayat\nAnalisa Pivot Point.',
       );
@@ -418,14 +423,16 @@ class _PivotHistoryTab extends StatelessWidget {
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: context.borderColor),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(6),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
+              if (!context.isDarkMode)
+                BoxShadow(
+                  color: Colors.black.withAlpha(6),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
             ],
           ),
           child: Material(
@@ -444,7 +451,9 @@ class _PivotHistoryTab extends StatelessWidget {
                           width: 38,
                           height: 38,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: context.isDarkMode
+                                ? const Color(0xFF3B82F6).withAlpha(35)
+                                : const Color(0xFFEFF6FF),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
@@ -460,42 +469,42 @@ class _PivotHistoryTab extends StatelessWidget {
                             children: [
                               Text(
                                 _formatDateTime(entry.timestamp),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF94A3B8),
+                                  color: context.textMuted,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 'XAU/USD',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
+                                  color: context.textPrimary,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.arrow_forward_ios_rounded,
                           size: 14,
-                          color: Color(0xFFCBD5E1),
+                          color: context.textMuted,
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    const Divider(height: 0, color: Color(0xFFF1F5F9)),
+                    Divider(height: 0, color: context.dividerColor),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'PP ${entry.pp.toStringAsFixed(2)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF0F172A),
+                            color: context.textPrimary,
                           ),
                         ),
                         Container(
@@ -504,7 +513,7 @@ class _PivotHistoryTab extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: _signalBg(entry.recommendation),
+                            color: _signalBg(entry.recommendation, context),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -530,18 +539,7 @@ class _PivotHistoryTab extends StatelessWidget {
 
   String _formatDateTime(DateTime dt) {
     final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Agu',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
     ];
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
@@ -566,18 +564,18 @@ class _EmptyState extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: context.chipBg,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Icon(icon, size: 36, color: const Color(0xFFCBD5E1)),
+            child: Icon(icon, size: 36, color: context.textMuted),
           ),
           const SizedBox(height: 16),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: Color(0xFF94A3B8),
+              color: context.textMuted,
               height: 1.5,
             ),
           ),
@@ -597,20 +595,22 @@ class _BackButton extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: context.borderColor),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(10),
-              blurRadius: 6,
-              offset: const Offset(0, 1),
-            ),
+            if (!context.isDarkMode) // Sembunyikan bayangan di dark mode
+              BoxShadow(
+                color: Colors.black.withAlpha(10),
+                blurRadius: 6,
+                offset: const Offset(0, 1),
+              ),
           ],
         ),
-        child: const Icon(
+        child: Icon(
           Icons.arrow_back_ios_new_rounded,
           size: 16,
-          color: Color(0xFF0F172A),
+          color: context.textPrimary,
         ),
       ),
     );

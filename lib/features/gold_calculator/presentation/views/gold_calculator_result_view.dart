@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/history_service.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/number_formatter.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class GoldCalculatorResultView extends StatelessWidget {
   const GoldCalculatorResultView({super.key});
@@ -66,7 +66,7 @@ class GoldCalculatorResultView extends StatelessWidget {
     final isPos = keuntunganBersih >= 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F7),
+      backgroundColor: context.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -84,20 +84,20 @@ class GoldCalculatorResultView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Title
-                    const Text(
+                    Text(
                       'Hasil Perhitungan',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _formatDateTimeNow(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF94A3B8),
+                        color: context.textMuted,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -105,14 +105,16 @@ class GoldCalculatorResultView extends StatelessWidget {
                     // ── RESULT ROWS CARD ──────────────────────────────
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: context.borderColor),
                         boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(8),
-                            blurRadius: 12,
-                            offset: const Offset(0, 3),
-                          ),
+                          if (!context.isDarkMode)
+                            BoxShadow(
+                              color: Colors.black.withAlpha(8),
+                              blurRadius: 12,
+                              offset: const Offset(0, 3),
+                            ),
                         ],
                       ),
                       child: Column(
@@ -120,31 +122,37 @@ class GoldCalculatorResultView extends StatelessWidget {
                           _resultRow(
                             'Harga Beli (HB)',
                             '\$${hb.toStringAsFixed(2)}',
+                            context,
                           ),
-                          _divider(),
+                          _divider(context),
                           _resultRow(
                             'Harga Jual (HJ)',
                             '\$${hj.toStringAsFixed(2)}',
+                            context,
                           ),
-                          _divider(),
+                          _divider(context),
                           _resultRow(
                             'Harga Hitung Beli (HHB)',
                             '${_formatCurrency(hhb)} / gram',
+                            context,
                           ),
-                          _divider(),
+                          _divider(context),
                           _resultRow(
                             'Harga Hitung Jual (HHJ)',
                             '${_formatCurrency(hhj)} / gram',
+                            context,
                           ),
-                          _divider(),
+                          _divider(context),
                           _resultRow(
                             'Selisih Harga',
                             '${_formatCurrency(selisih)} / gram',
+                            context,
                           ),
-                          _divider(),
+                          _divider(context),
                           _resultRow(
                             'Estimasi Gram Emas',
                             _formatGram(gramEmas),
+                            context,
                           ),
                         ],
                       ),
@@ -193,17 +201,18 @@ class GoldCalculatorResultView extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE2E8F0),
+                        color: context.isDarkMode ? AppColors.darkSurface : const Color(0xFFE2E8F0),
                         borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: context.borderColor),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'PARAMETER DIGUNAKAN',
                             style: TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF64748B),
+                              color: context.textSecondary,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.6,
                             ),
@@ -215,6 +224,7 @@ class GoldCalculatorResultView extends StatelessWidget {
                                 child: _paramChip(
                                   'Modal Awal',
                                   _formatCurrency(modalAwal),
+                                  context,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -222,10 +232,11 @@ class GoldCalculatorResultView extends StatelessWidget {
                                 child: _paramChip(
                                   'Kurs USD',
                                   _formatCurrency(kurs),
+                                  context,
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Expanded(child: _paramChip('TOZ', '31.1')),
+                              Expanded(child: _paramChip('TOZ', '31.1', context)),
                             ],
                           ),
                         ],
@@ -252,7 +263,7 @@ class GoldCalculatorResultView extends StatelessWidget {
                           'keuntunganBersih': keuntunganBersih,
                         }),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0F172A),
+                          backgroundColor: context.isDarkMode ? AppColors.primary : const Color(0xFF0F172A),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -279,12 +290,12 @@ class GoldCalculatorResultView extends StatelessWidget {
                           child: OutlinedButton(
                             onPressed: () => Navigator.of(context).pop(),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF0F172A),
-                              side: const BorderSide(color: Color(0xFFE2E8F0)),
+                              foregroundColor: context.textPrimary,
+                              side: BorderSide(color: context.borderColor),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              backgroundColor: Colors.white,
+                              backgroundColor: context.cardBg,
                             ),
                             child: const Text(
                               'Hitung Ulang',
@@ -299,12 +310,12 @@ class GoldCalculatorResultView extends StatelessWidget {
                               context,
                             ).pushReplacementNamed(AppRoutes.goldCalculator),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF0F172A),
-                              side: const BorderSide(color: Color(0xFFE2E8F0)),
+                              foregroundColor: context.textPrimary,
+                              side: BorderSide(color: context.borderColor),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              backgroundColor: Colors.white,
+                              backgroundColor: context.cardBg,
                             ),
                             child: const Text(
                               'Reset',
@@ -319,15 +330,15 @@ class GoldCalculatorResultView extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.cardBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: context.borderColor),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Perhitungan berdasarkan spread pasar. Pastikan konfirmasi dengan kantor cabang sebelum transaksi.',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF94A3B8),
+                          color: context.textMuted,
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,
@@ -369,7 +380,7 @@ class GoldCalculatorResultView extends StatelessWidget {
     );
   }
 
-  Widget _resultRow(String label, String value) {
+  Widget _resultRow(String label, String value, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
@@ -378,15 +389,15 @@ class GoldCalculatorResultView extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 13, color: context.textSecondary),
             ),
           ),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
+              color: context.textPrimary,
             ),
           ),
         ],
@@ -394,28 +405,28 @@ class GoldCalculatorResultView extends StatelessWidget {
     );
   }
 
-  Widget _divider() => const Divider(
+  Widget _divider(BuildContext context) => Divider(
     height: 0,
-    color: Color(0xFFF1F5F9),
+    color: context.dividerColor,
     indent: 16,
     endIndent: 16,
   );
 
-  Widget _paramChip(String label, String value) {
+  Widget _paramChip(String label, String value, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+          style: TextStyle(fontSize: 10, color: context.textMuted),
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: context.textPrimary,
           ),
           overflow: TextOverflow.ellipsis,
         ),
@@ -454,8 +465,9 @@ class _BackButton extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: context.borderColor),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withAlpha(10),
@@ -464,10 +476,10 @@ class _BackButton extends StatelessWidget {
             ),
           ],
         ),
-        child: const Icon(
+        child: Icon(
           Icons.arrow_back_ios_new_rounded,
           size: 16,
-          color: Color(0xFF0F172A),
+          color: context.textPrimary,
         ),
       ),
     );

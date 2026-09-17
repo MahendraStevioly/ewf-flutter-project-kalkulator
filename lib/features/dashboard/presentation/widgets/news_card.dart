@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_item.dart';
 
 class NewsCard extends StatelessWidget {
@@ -19,15 +20,16 @@ class NewsCard extends StatelessWidget {
       width: 240,
       margin: const EdgeInsets.only(right: 14),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.lightGray.withAlpha(180), width: 1),
+        border: Border.all(color: context.borderColor, width: 1),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+          if (!context.isDarkMode)
+            BoxShadow(
+              color: Colors.black.withAlpha(8),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
         ],
       ),
       child: Material(
@@ -49,7 +51,7 @@ class NewsCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: const Color(0xFFE2E8F0),
+                        color: context.isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                         child: Center(
                           child: Icon(
                             Icons.article_rounded,
@@ -62,7 +64,7 @@ class NewsCard extends StatelessWidget {
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return Container(
-                        color: const Color(0xFFF1F5F9),
+                        color: context.isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                         child: const Center(
                           child: SizedBox(
                             width: 20,
@@ -87,10 +89,10 @@ class NewsCard extends StatelessWidget {
                   children: [
                     Text(
                       '${item.category} • ${item.timeAgo}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF718096),
+                        color: context.textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -98,10 +100,10 @@ class NewsCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       item.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1A202C),
+                        color: context.textPrimary,
                         height: 1.25,
                       ),
                       maxLines: 2,
