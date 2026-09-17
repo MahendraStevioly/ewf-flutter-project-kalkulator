@@ -3,82 +3,247 @@ import 'package:provider/provider.dart';
 import '../../domain/entities/market_data.dart';
 import '../viewmodels/pivot_point_viewmodel.dart';
 
-class NewsmakerTableWidget extends StatelessWidget {
+class NewsmakerTableWidget extends StatefulWidget {
   const NewsmakerTableWidget({super.key});
+
+  @override
+  State<NewsmakerTableWidget> createState() => _NewsmakerTableWidgetState();
+}
+
+class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildHeaderCell(String text, {double width = 80}) {
+    return Container(
+      width: width,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      child: Text(text, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+    );
+  }
+
+  Widget _buildDataCell(String text, {double width = 80, bool isBold = false}) {
+    return Container(
+      width: width,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      child: Text(
+        text, 
+        style: TextStyle(
+          fontWeight: isBold ? FontWeight.w700 : FontWeight.w500, 
+          color: isBold ? const Color(0xFF0F172A) : null
+        )
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<PivotPointViewModel>();
     final histories = viewModel.newsmakerHistories;
+    
+    // Daftar instrumen yang tersedia
+    final symbols = ['Gold', 'Hang Seng', 'Nikkei'];
 
-    if (histories.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20.0),
-          child: Text('Belum ada data historis newsmaker'),
-        ),
-      );
-    }
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      // Memotong sudut tabel agar melengkung rapi
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        // INI KUNCI AGAR TABEL BISA DIGULIR KE SAMPING
-        child: SingleChildScrollView(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── CHIP FILTER INSTRUMEN ──
+        SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
-          child: DataTable(
-            headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-            dataRowMaxHeight: 56,
-            columnSpacing: 24, // Jarak antar kolom
-            columns: const [
-              DataColumn(label: Text('Tanggal', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B)))),
-              DataColumn(label: Text('High', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B)))),
-              DataColumn(label: Text('Low', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B)))),
-              DataColumn(label: Text('Close', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B)))),
-              DataColumn(label: Text('Open', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B)))),
-              DataColumn(label: Text('Aksi', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B)))),
-            ],
-            rows: histories.map((data) {
-              return DataRow(
-                cells: [
-                  DataCell(Text(data.date, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF0F172A)))),
-                  DataCell(Text(data.high.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.w500))),
-                  DataCell(Text(data.low.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.w500))),
-                  DataCell(Text(data.close.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.w500))),
-                  DataCell(Text(data.open.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.w500))),
-                  DataCell(
-                    ElevatedButton(
-                      onPressed: () => viewModel.calculateFromHistory(data),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF7941D),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text('Hitung', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+          child: Row(
+            children: symbols.map((sym) {
+              final isSelected = viewModel.selectedNewsmakerSymbol == sym;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Text(sym),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      viewModel.changeNewsmakerSymbol(sym);
+                      // Scroll list ke atas saat ganti instrumen
+                      if (_scrollController.hasClients) {
+                        _scrollController.jumpTo(0);
+                      }
+                    }
+                  },
+                  showCheckmark: false,
+                  selectedColor: const Color(0xFFF7941D),
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(
+                      color: isSelected ? const Color(0xFFF7941D) : const Color(0xFFE2E8F0),
                     ),
                   ),
-                ],
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : const Color(0xFF64748B),
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
               );
             }).toList(),
           ),
         ),
-      ),
+        
+        const SizedBox(height: 16),
+
+        // ── TABEL DATA HISTORIS (PAGINATED) ──
+        if (histories.isEmpty && !viewModel.isLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Text('Belum ada data historis'),
+            ),
+          )
+        else
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(8),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: SizedBox(
+                  width: 650, // Lebar fixed minimum agar list view bisa scroll vertikal tanpa terpotong layout horizontal
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header Table Custom
+                      Container(
+                        color: const Color(0xFFF8FAFC),
+                        child: Row(
+                          children: [
+                            _buildHeaderCell('Tanggal', width: 120),
+                            _buildHeaderCell('High', width: 85),
+                            _buildHeaderCell('Low', width: 85),
+                            _buildHeaderCell('Close', width: 85),
+                            _buildHeaderCell('Open', width: 85),
+                            _buildHeaderCell('Aksi', width: 110),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                      
+                      // Body Table dengan ListView.builder
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 400),
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          itemCount: histories.length,
+                          itemBuilder: (context, index) {
+                            final data = histories[index];
+                            return Container(
+                              decoration: const BoxDecoration(
+                                border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                              ),
+                              child: Row(
+                                children: [
+                                  _buildDataCell(data.date, width: 120, isBold: true),
+                                  _buildDataCell(data.high.toStringAsFixed(2), width: 85),
+                                  _buildDataCell(data.low.toStringAsFixed(2), width: 85),
+                                  _buildDataCell(data.close.toStringAsFixed(2), width: 85),
+                                  _buildDataCell(data.open.toStringAsFixed(2), width: 85),
+                                  Container(
+                                    width: 110,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    child: ElevatedButton(
+                                      onPressed: () => viewModel.calculateFromHistory(data),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFF7941D),
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                      child: const Text('Hitung', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+        if (histories.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton.icon(
+                onPressed: viewModel.currentPage > 1 && !viewModel.isFetchingMore 
+                    ? () => viewModel.previousPage() 
+                    : null,
+                icon: const Icon(Icons.chevron_left, size: 20),
+                label: const Text('Sebelumnya', style: TextStyle(fontWeight: FontWeight.bold)),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFF7941D),
+                  disabledForegroundColor: Colors.grey,
+                ),
+              ),
+              if (viewModel.isFetchingMore)
+                const SizedBox(
+                  width: 20, height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Text(
+                  'Halaman ${viewModel.currentPage}',
+                  style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                ),
+              TextButton(
+                onPressed: viewModel.hasMoreData && !viewModel.isFetchingMore 
+                    ? () => viewModel.nextPage() 
+                    : null,
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFF7941D),
+                  disabledForegroundColor: Colors.grey,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text('Selanjutnya', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Icon(Icons.chevron_right, size: 20),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }
