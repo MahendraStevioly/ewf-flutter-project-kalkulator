@@ -542,33 +542,6 @@ class _DashboardViewState extends State<_DashboardView> {
   }
 
   Widget _buildFeatureList(BuildContext context) {
-    final features = [
-      const _FeatureItem(
-        icon: Icons.diamond_outlined,
-        title: 'Kalkulator Emas Fisik',
-        subtitle: 'Hitung estimasi keuntungan emas fisik',
-        route: AppRoutes.goldCalculator,
-        iconColor: AppColors.primary,
-        iconBg: Color(0xFFFFF3E0),
-      ),
-      const _FeatureItem(
-        icon: Icons.candlestick_chart_rounded,
-        title: 'Analisa Pivot Point',
-        subtitle: 'Hitung level support dan resistance',
-        route: AppRoutes.pivotPoint,
-        iconColor: AppColors.primary,
-        iconBg: Color(0xFFFFF3E0),
-      ),
-      const _FeatureItem(
-        icon: Icons.bar_chart_rounded,
-        title: 'Grafik Harga Komoditas',
-        subtitle: 'Chart live dari TradingView',
-        route: AppRoutes.commodityChart,
-        iconColor: AppColors.primary,
-        iconBg: Color(0xFFFFF3E0),
-      ),
-    ];
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -582,24 +555,160 @@ class _DashboardViewState extends State<_DashboardView> {
         ],
       ),
       child: Column(
-        children: List.generate(features.length, (index) {
-          final f = features[index];
-          final isLast = index == features.length - 1;
-          return Column(
-            children: [
-              _FeatureListTile(
-                icon: f.icon,
-                title: f.title,
-                subtitle: f.subtitle,
-                iconColor: f.iconColor,
-                iconBg: f.iconBg,
-                onTap: () => Navigator.of(context).pushNamed(f.route),
+        children: [
+          // ── Item 1: Kalkulator Emas Fisik (tetap sama) ──
+          _FeatureListTile(
+            icon: Icons.diamond_outlined,
+            title: 'Kalkulator Emas Fisik',
+            subtitle: 'Hitung estimasi keuntungan emas fisik',
+            iconColor: AppColors.primary,
+            iconBg: const Color(0xFFFFF3E0),
+            onTap: () => Navigator.of(context).pushNamed(AppRoutes.goldCalculator),
+          ),
+          const Divider(height: 0, indent: 64, color: Color(0xFFF1F5F9)),
+
+          // ── Item 2: Konsep Transaksi (Accordion) ──
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+              leading: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.candlestick_chart_rounded, color: AppColors.primary, size: 22),
               ),
-              if (!isLast)
-                const Divider(height: 0, indent: 64, color: Color(0xFFF1F5F9)),
-            ],
-          );
-        }),
+              title: const Text(
+                'Konsep Transaksi',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              subtitle: const Text(
+                'Pilih metode analisa & kalkulasi',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF8FAFC),
+                  ),
+                  child: Column(
+                    children: [
+                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            // TODO: Navigasi ke Nest
+                            print('Navigasi ke Nest');
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 72, right: 16, top: 12, bottom: 12),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withAlpha(4),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(Icons.hub_outlined, size: 16, color: AppColors.primary),
+                                ),
+                                const SizedBox(width: 14),
+                                const Expanded(
+                                  child: Text(
+                                    'Nest',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF334155),
+                                    ),
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 18),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1, indent: 72, color: Color(0xFFE2E8F0)),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => Navigator.of(context).pushNamed(AppRoutes.pivotPoint),
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 72, right: 16, top: 12, bottom: 12),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withAlpha(4),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(Icons.show_chart_rounded, size: 16, color: AppColors.primary),
+                                ),
+                                const SizedBox(width: 14),
+                                const Expanded(
+                                  child: Text(
+                                    'Pivot Point',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF334155),
+                                    ),
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 18),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 0, indent: 64, color: Color(0xFFF1F5F9)),
+
+          // ── Item 3: Grafik Harga Komoditas (tetap sama) ──
+          _FeatureListTile(
+            icon: Icons.bar_chart_rounded,
+            title: 'Grafik Harga Komoditas',
+            subtitle: 'Chart live dari TradingView',
+            iconColor: AppColors.primary,
+            iconBg: const Color(0xFFFFF3E0),
+            onTap: () => Navigator.of(context).pushNamed(AppRoutes.commodityChart),
+          ),
+        ],
       ),
     );
   }
