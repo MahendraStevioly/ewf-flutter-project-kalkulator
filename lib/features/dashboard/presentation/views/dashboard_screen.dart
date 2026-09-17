@@ -6,11 +6,10 @@ import '../../../news/presentation/views/all_news_screen.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/history_service.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/number_formatter.dart';
-import '../../domain/entities/news_item.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
-import '../widgets/news_card.dart';
 import '../widgets/news_detail_bottom_sheet.dart';
+import '../widgets/news_card.dart';
 import 'package:kalkulator_pivot/features/news/presentation/viewmodels/news_viewmodel.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -105,7 +104,7 @@ class _DashboardViewState extends State<_DashboardView> {
     final viewModel = context.watch<DashboardViewModel>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F7),
+      backgroundColor: context.scaffoldBg,
       body: RefreshIndicator(
         color: AppColors.primary,
         onRefresh: () async {
@@ -131,7 +130,7 @@ class _DashboardViewState extends State<_DashboardView> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  _buildPriceCard(viewModel),
+                  _buildPriceCard(context, viewModel),
                   const SizedBox(height: 24),
                   _buildSectionHeader(
                     context,
@@ -150,12 +149,12 @@ class _DashboardViewState extends State<_DashboardView> {
                   const SizedBox(height: 12),
                   _buildNewsSection(context, viewModel),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Fitur Utama',
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -317,19 +316,21 @@ class _DashboardViewState extends State<_DashboardView> {
     );
   }
 
-  Widget _buildPriceCard(DashboardViewModel viewModel) {
+  Widget _buildPriceCard(BuildContext context, DashboardViewModel viewModel) {
     return Container(
       margin: const EdgeInsets.only(top: 20),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.borderColor),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(12),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
+          if (!context.isDarkMode)
+            BoxShadow(
+              color: Colors.black.withAlpha(12),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
         ],
       ),
       child: Column(
@@ -340,10 +341,10 @@ class _DashboardViewState extends State<_DashboardView> {
             children: [
               Row(
                 children: [
-                  const Text(
+                  Text(
                     'XAU/USD',
                     style: TextStyle(
-                      color: Color(0xFF0F172A),
+                      color: context.textPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
@@ -352,7 +353,9 @@ class _DashboardViewState extends State<_DashboardView> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFDCFCE7),
+                      color: context.isDarkMode
+                          ? const Color(0xFF16A34A).withAlpha(40)
+                          : const Color(0xFFDCFCE7),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Row(
@@ -379,8 +382,8 @@ class _DashboardViewState extends State<_DashboardView> {
               ),
               Text(
                 'Diperbarui ${viewModel.lastUpdated}',
-                style: const TextStyle(
-                  color: Color(0xFF94A3B8),
+                style: TextStyle(
+                  color: context.textMuted,
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
@@ -394,8 +397,8 @@ class _DashboardViewState extends State<_DashboardView> {
             children: [
               Text(
                 '\$${viewModel.liveGoldPrice}',
-                style: const TextStyle(
-                  color: Color(0xFF0F172A),
+                style: TextStyle(
+                  color: context.textPrimary,
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
@@ -428,10 +431,10 @@ class _DashboardViewState extends State<_DashboardView> {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F172A),
+            color: context.textPrimary,
           ),
         ),
         if (actionLabel != null)
@@ -501,12 +504,12 @@ class _DashboardViewState extends State<_DashboardView> {
     );
   }
 
-  Widget _buildNewsShimmer() {
+Widget _buildNewsShimmer() { 
     return Container(
       width: 220,
       margin: const EdgeInsets.only(right: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg, // <--- Cukup ganti warnanya pake ini
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -514,24 +517,24 @@ class _DashboardViewState extends State<_DashboardView> {
         children: [
           Container(
             height: 120,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE2E8F0),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+            decoration: BoxDecoration(
+              color: context.chipBg, // <--- Ganti ini juga
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.all(12),
+          Padding(
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
                   height: 8,
-                  child: ColoredBox(color: Color(0xFFE2E8F0)),
+                  child: ColoredBox(color: context.chipBg), // <--- Ganti ini
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 SizedBox(
                   height: 12,
-                  child: ColoredBox(color: Color(0xFFE2E8F0)),
+                  child: ColoredBox(color: context.chipBg), // <--- Dan ini
                 ),
               ],
             ),
@@ -571,14 +574,16 @@ class _DashboardViewState extends State<_DashboardView> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.borderColor),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
+          if (!context.isDarkMode)
+            BoxShadow(
+              color: Colors.black.withAlpha(8),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
         ],
       ),
       child: Column(
@@ -592,11 +597,13 @@ class _DashboardViewState extends State<_DashboardView> {
                 title: f.title,
                 subtitle: f.subtitle,
                 iconColor: f.iconColor,
-                iconBg: f.iconBg,
+                iconBg: context.isDarkMode
+                    ? AppColors.primary.withAlpha(30)
+                    : f.iconBg,
                 onTap: () => Navigator.of(context).pushNamed(f.route),
               ),
               if (!isLast)
-                const Divider(height: 0, indent: 64, color: Color(0xFFF1F5F9)),
+                Divider(height: 0, indent: 64, color: context.dividerColor),
             ],
           );
         }),
@@ -611,9 +618,9 @@ class _DashboardViewState extends State<_DashboardView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: context.borderColor),
         ),
         child: Row(
           children: [
@@ -621,12 +628,12 @@ class _DashboardViewState extends State<_DashboardView> {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
+                color: context.chipBg,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.settings_rounded,
-                color: Color(0xFF334155),
+                color: context.isDarkMode ? AppColors.primary : const Color(0xFF334155),
                 size: 21,
               ),
             ),
@@ -634,30 +641,30 @@ class _DashboardViewState extends State<_DashboardView> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     'Pengaturan',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: context.textPrimary,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     'Konfigurasi parameter & preferensi',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: context.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios_rounded,
               size: 14,
-              color: Color(0xFF94A3B8),
+              color: context.textMuted,
             ),
           ],
         ),
@@ -672,22 +679,24 @@ class _DashboardViewState extends State<_DashboardView> {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: context.borderColor),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(8),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
+            if (!context.isDarkMode)
+              BoxShadow(
+                color: Colors.black.withAlpha(8),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+              ),
           ],
         ),
-        child: const Center(
+        child: Center(
           child: Text(
             'Belum ada riwayat perhitungan.\nMulai hitung untuk melihat riwayat di sini.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Color(0xFF94A3B8),
+              color: context.textMuted,
               fontSize: 13,
               height: 1.5,
             ),
@@ -698,14 +707,16 @@ class _DashboardViewState extends State<_DashboardView> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.borderColor),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
+          if (!context.isDarkMode)
+            BoxShadow(
+              color: Colors.black.withAlpha(8),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
         ],
       ),
       child: Column(
@@ -744,7 +755,7 @@ class _DashboardViewState extends State<_DashboardView> {
             children: [
               tile,
               if (!isLast)
-                const Divider(height: 0, indent: 64, color: Color(0xFFF1F5F9)),
+                Divider(height: 0, indent: 64, color: context.dividerColor),
             ],
           );
         }),
@@ -768,6 +779,10 @@ class _DashboardViewState extends State<_DashboardView> {
         ? const Color(0xFF16A34A)
         : const Color(0xFFDC2626);
 
+    final bgBadgeColor = isGold
+        ? (context.isDarkMode ? AppColors.primary.withAlpha(35) : const Color(0xFFFFF3E0))
+        : (context.isDarkMode ? const Color(0xFF3B82F6).withAlpha(35) : const Color(0xFFEFF6FF));
+
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -778,7 +793,7 @@ class _DashboardViewState extends State<_DashboardView> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: isGold ? const Color(0xFFFFF3E0) : const Color(0xFFEFF6FF),
+                color: bgBadgeColor,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
@@ -794,10 +809,10 @@ class _DashboardViewState extends State<_DashboardView> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF0F172A),
+                      color: context.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -805,9 +820,9 @@ class _DashboardViewState extends State<_DashboardView> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF94A3B8),
+                      color: context.textMuted,
                     ),
                   ),
                 ],
@@ -847,7 +862,7 @@ class _DashboardViewState extends State<_DashboardView> {
     }
     return '${value >= 0 ? '+' : '-'}Rp${value.abs().toStringAsFixed(0)}';
   }
-} // <--- INI KURUNG KURAWAL YANG SEBELUMNYA HILANG!
+}
 
 class _FeatureItem {
   const _FeatureItem({
@@ -909,27 +924,27 @@ class _FeatureListTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: context.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios_rounded,
               size: 14,
-              color: Color(0xFF94A3B8),
+              color: context.textMuted,
             ),
           ],
         ),

@@ -1,52 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/theme_controller.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  final TextEditingController _modalController =
-      TextEditingController(text: '100.000.000');
-  final TextEditingController _kursController =
-      TextEditingController(text: '18.000');
-  final TextEditingController _tozController =
-      TextEditingController(text: '31,1');
-
-  bool _isSaved = false;
-
-  @override
-  void dispose() {
-    _modalController.dispose();
-    _kursController.dispose();
-    _tozController.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    FocusScope.of(context).unfocus();
-    setState(() => _isSaved = true);
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _isSaved = false);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Parameter berhasil disimpan'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Color(0xFF16A34A),
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeController = Provider.of<ThemeController>(context);
+
+    // Color tokens adaptive to current active theme
+    final bgColor = isDark ? AppColors.darkBackground : const Color(0xFFF2F4F7);
+    final cardColor = isDark ? AppColors.darkSurface : Colors.white;
+    final textPrimary = isDark ? AppColors.darkText : const Color(0xFF0F172A);
+    final textSecondary = isDark ? AppColors.darkTextMuted : const Color(0xFF64748B);
+    final borderColor = isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F7),
+      backgroundColor: bgColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,228 +31,327 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Row(
                 children: [
-                  _BackButton(),
+                  _BackButton(
+                    cardColor: cardColor,
+                    textColor: textPrimary,
+                    borderColor: borderColor,
+                  ),
                   const SizedBox(width: 16),
-                  const Text(
+                  Text(
                     'Pengaturan',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: textPrimary,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             Expanded(
               child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── CALCULATION PARAMETERS ─────────────────────────
-                    const Text(
-                      'Parameter Kalkulasi',
+                    // ── THEME SECTION ──────────────────────────────────
+                    Text(
+                      'TEMA TAMPILAN',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        letterSpacing: 1.1,
+                        color: textSecondary,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(8),
-                            blurRadius: 12,
-                            offset: const Offset(0, 3),
+
+                    // Theme selector cards (Light vs Dark)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _ThemeOptionCard(
+                            title: 'Mode Terang',
+                            subtitle: 'Cerah & Bersih',
+                            icon: Icons.light_mode_rounded,
+                            iconColor: const Color(0xFFEAB308),
+                            isSelected: !themeController.isDarkMode,
+                            cardColor: cardColor,
+                            textPrimary: textPrimary,
+                            textSecondary: textSecondary,
+                            borderColor: borderColor,
+                            onTap: () => themeController.setThemeMode(ThemeMode.light),
                           ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _SettingsField(
-                              label: 'Modal Awal (IDR)',
-                              controller: _modalController,
-                              prefix: 'Rp',
-                              keyboardType: TextInputType.number,
-                            ),
-                            const SizedBox(height: 14),
-                            _SettingsField(
-                              label: 'Kurs Default (USD/IDR)',
-                              controller: _kursController,
-                              prefix: 'Rp',
-                              keyboardType: TextInputType.number,
-                            ),
-                            const SizedBox(height: 14),
-                            _SettingsField(
-                              label: 'TOZ (Troy Ounce)',
-                              controller: _tozController,
-                              prefix: '',
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            ),
-                            const SizedBox(height: 14),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF0F9FF),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFFBAE6FD)),
-                              ),
-                              child: Row(
-                                children: const [
-                                  Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF0284C7)),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Nilai ini digunakan sebagai parameter default pada perhitungan emas fisik.',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF0284C7),
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 48,
-                              child: ElevatedButton(
-                                onPressed: _save,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF0F172A),
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 200),
-                                  child: _isSaved
-                                      ? const Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(Icons.check_rounded, size: 18),
-                                            SizedBox(width: 8),
-                                            Text('Tersimpan!', style: TextStyle(fontWeight: FontWeight.w700)),
-                                          ],
-                                        )
-                                      : const Text(
-                                          'Simpan Parameter',
-                                          style: TextStyle(fontWeight: FontWeight.w700),
-                                        ),
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _ThemeOptionCard(
+                            title: 'Mode Gelap',
+                            subtitle: 'Nyaman di Mata',
+                            icon: Icons.dark_mode_rounded,
+                            iconColor: const Color(0xFF818CF8),
+                            isSelected: themeController.isDarkMode,
+                            cardColor: cardColor,
+                            textPrimary: textPrimary,
+                            textSecondary: textSecondary,
+                            borderColor: borderColor,
+                            onTap: () => themeController.setThemeMode(ThemeMode.dark),
+                          ),
+                        ),
+                      ],
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
-                    // ── PREFERENCES & SYSTEM ───────────────────────────
-                    const Text(
-                      'Preferensi & Sistem',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    // Quick toggle list tile
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(8),
-                            blurRadius: 12,
-                            offset: const Offset(0, 3),
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: borderColor),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withAlpha(25),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              themeController.isDarkMode
+                                  ? Icons.nightlight_round
+                                  : Icons.wb_sunny_rounded,
+                              size: 20,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Aktifkan Mode Gelap',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  themeController.isDarkMode
+                                      ? 'Tema gelap sedang aktif'
+                                      : 'Tema terang sedang aktif',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch.adaptive(
+                            value: themeController.isDarkMode,
+                            activeThumbColor: AppColors.primary,
+                            onChanged: (_) => themeController.toggleTheme(),
                           ),
                         ],
                       ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // ── ABOUT SECTION ──────────────────────────────────
+                    Text(
+                      'TENTANG APLIKASI',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.1,
+                        color: textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: borderColor),
+                        boxShadow: [
+                          if (!isDark)
+                            BoxShadow(
+                              color: Colors.black.withAlpha(8),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          _SettingsTile(
-                            icon: Icons.tag_rounded,
-                            title: 'Format Angka',
-                            trailing: '1.000.000,00',
-                            onTap: () {},
-                          ),
-                          const Divider(height: 0, indent: 56, color: Color(0xFFF1F5F9)),
-                          _SettingsTile(
-                            icon: Icons.data_array_rounded,
-                            title: 'Presisi Desimal',
-                            trailing: '2 digit',
-                            onTap: () {},
-                          ),
-                          const Divider(height: 0, indent: 56, color: Color(0xFFF1F5F9)),
-                          _SettingsTile(
-                            icon: Icons.info_outline_rounded,
-                            title: 'Tentang Aplikasi',
-                            trailing: 'v1.0.0 (Build 1)',
-                            onTap: () {
-                              showAboutDialog(
-                                context: context,
-                                applicationName: 'EWF Staff Utility',
-                                applicationVersion: 'v1.0.0',
-                                applicationLegalese:
-                                    'Aplikasi kalkulator emas fisik dan analisa pivot point untuk staff EWF.',
-                              );
-                            },
-                          ),
-                          const Divider(height: 0, indent: 56, color: Color(0xFFF1F5F9)),
-                          _SettingsTile(
-                            icon: Icons.delete_sweep_rounded,
-                            title: 'Hapus Riwayat Lokal',
-                            titleColor: const Color(0xFFDC2626),
-                            iconColor: const Color(0xFFDC2626),
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                  title: const Text('Hapus Semua Riwayat'),
-                                  content: const Text(
-                                    'Semua riwayat perhitungan akan dihapus permanen. Lanjutkan?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('Batal'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Riwayat berhasil dihapus'),
-                                            behavior: SnackBarBehavior.floating,
-                                          ),
-                                        );
-                                      },
-                                      child: const Text(
-                                        'Hapus',
-                                        style: TextStyle(color: Color(0xFFDC2626)),
-                                      ),
-                                    ),
-                                  ],
+                          // App Emblem / Badge
+                          Container(
+                            width: 68,
+                            height: 68,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFFA726), Color(0xFFF7941D)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withAlpha(80),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 5),
                                 ),
-                              );
-                            },
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.calculate_rounded,
+                              size: 36,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // App Name
+                          Text(
+                            AppConstants.appName,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+
+                          // App Version & Tag
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withAlpha(30),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'v1.0.0',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.white.withAlpha(15)
+                                      : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Build 1',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Description
+                          Text(
+                            'Aplikasi utilitas perhitungan kalkulator emas fisik dan analisa pivot point komoditas yang dirancang khusus untuk mendukung operasional dan kebutuhan analisis staf internal.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.5,
+                              color: textSecondary,
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+                          Divider(height: 1, color: borderColor),
+                          const SizedBox(height: 16),
+
+                          // Info rows
+                          _AboutInfoRow(
+                            label: 'Organisasi',
+                            value: 'PT Equityworld Futures',
+                            textPrimary: textPrimary,
+                            textSecondary: textSecondary,
+                          ),
+                          const SizedBox(height: 10),
+                          _AboutInfoRow(
+                            label: 'Tujuan',
+                            value: 'Staff Utility & Analysis',
+                            textPrimary: textPrimary,
+                            textSecondary: textSecondary,
+                          ),
+                          const SizedBox(height: 10),
+                          _AboutInfoRow(
+                            label: 'Status',
+                            value: 'Production Ready',
+                            valueColor: AppColors.positive,
+                            textPrimary: textPrimary,
+                            textSecondary: textSecondary,
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // Button detail dialog
+                          SizedBox(
+                            width: double.infinity,
+                            height: 44,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                showAboutDialog(
+                                  context: context,
+                                  applicationName: AppConstants.appName,
+                                  applicationVersion: 'v1.0.0 (Build 1)',
+                                  applicationIcon: Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(Icons.calculate_rounded, color: Colors.white),
+                                  ),
+                                  applicationLegalese:
+                                      '© 2026 PT Equityworld Futures.\nSemua hak cipta dilindungi undang-undang.',
+                                );
+                              },
+                              icon: const Icon(Icons.info_outline_rounded, size: 18),
+                              label: const Text(
+                                'Informasi Lisensi',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                side: const BorderSide(color: AppColors.primary),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -295,120 +369,98 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-class _SettingsField extends StatelessWidget {
-  const _SettingsField({
-    required this.label,
-    required this.controller,
-    required this.prefix,
-    required this.keyboardType,
-  });
-
-  final String label;
-  final TextEditingController controller;
-  final String prefix;
-  final TextInputType keyboardType;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF64748B),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.,]'))],
-          decoration: InputDecoration(
-            prefixText: prefix.isNotEmpty ? '$prefix ' : null,
-            prefixStyle: const TextStyle(
-              color: Color(0xFF64748B),
-              fontWeight: FontWeight.w600,
-            ),
-            filled: true,
-            fillColor: const Color(0xFFF8FAFC),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SettingsTile extends StatelessWidget {
-  const _SettingsTile({
-    required this.icon,
+class _ThemeOptionCard extends StatelessWidget {
+  const _ThemeOptionCard({
     required this.title,
-    this.trailing,
-    this.titleColor,
-    this.iconColor,
+    required this.subtitle,
+    required this.icon,
+    required this.iconColor,
+    required this.isSelected,
+    required this.cardColor,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.borderColor,
     required this.onTap,
   });
 
-  final IconData icon;
   final String title;
-  final String? trailing;
-  final Color? titleColor;
-  final Color? iconColor;
+  final String subtitle;
+  final IconData icon;
+  final Color iconColor;
+  final bool isSelected;
+  final Color cardColor;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color borderColor;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : borderColor,
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: AppColors.primary.withAlpha(30),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: (iconColor ?? const Color(0xFF64748B)).withAlpha(20),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 18, color: iconColor ?? const Color(0xFF64748B)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: titleColor ?? const Color(0xFF0F172A),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: iconColor.withAlpha(25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, size: 20, color: iconColor),
                 ),
+                if (isSelected)
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    size: 20,
+                    color: AppColors.primary,
+                  )
+                else
+                  Icon(
+                    Icons.radio_button_unchecked_rounded,
+                    size: 20,
+                    color: borderColor,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
               ),
             ),
-            if (trailing != null)
-              Text(
-                trailing!,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11,
+                color: textSecondary,
               ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 12,
-              color: titleColor ?? const Color(0xFFCBD5E1),
             ),
           ],
         ),
@@ -417,22 +469,81 @@ class _SettingsTile extends StatelessWidget {
   }
 }
 
+class _AboutInfoRow extends StatelessWidget {
+  const _AboutInfoRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    required this.textPrimary,
+    required this.textSecondary,
+  });
+
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final Color textPrimary;
+  final Color textSecondary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: textSecondary,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: valueColor ?? textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _BackButton extends StatelessWidget {
+  const _BackButton({
+    required this.cardColor,
+    required this.textColor,
+    required this.borderColor,
+  });
+
+  final Color cardColor;
+  final Color textColor;
+  final Color borderColor;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => Navigator.of(context).pop(),
       child: Container(
-        width: 36,
-        height: 36,
+        width: 38,
+        height: 38,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          color: cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor),
           boxShadow: [
-            BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 6, offset: const Offset(0, 1)),
+            BoxShadow(
+              color: Colors.black.withAlpha(10),
+              blurRadius: 6,
+              offset: const Offset(0, 1),
+            ),
           ],
         ),
-        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Color(0xFF0F172A)),
+        child: Icon(
+          Icons.arrow_back_ios_new_rounded,
+          size: 16,
+          color: textColor,
+        ),
       ),
     );
   }

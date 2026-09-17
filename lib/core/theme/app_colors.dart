@@ -11,4 +11,11 @@ class AppColors {
   static const Color white = Color(0xFFFFFFFF);
   static const Color positive = Color(0xFF16A34A);
   static const Color negative = Color(0xFFDC2626);
+
+  // Dark Theme Colors
+  static const Color darkBackground = Color(0xFF0F172A);
+  static const Color darkSurface = Color(0xFF1E293B);
+  static const Color darkBorder = Color(0xFF334155);
+  static const Color darkText = Color(0xFFF8FAFC);
+  static const Color darkTextMuted = Color(0xFF94A3B8);
 }

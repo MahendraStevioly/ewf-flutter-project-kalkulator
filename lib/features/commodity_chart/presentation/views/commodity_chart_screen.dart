@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../widgets/tradingview_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -15,27 +16,28 @@ class CommodityChartScreen extends StatefulWidget {
 class _CommodityChartScreenState extends State<CommodityChartScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  // ── PENAMBAHAN HANG SENG DI SINI ──
-  final List<_Commodity> _commodities = const [
-    _Commodity(name: 'Emas', tvSymbol: AppConstants.symbolGold),
-    _Commodity(name: 'Hang Seng', tvSymbol: 'VANTAGE:HK50'), // <-- Opsi Hang Seng
-    _Commodity(name: 'Perak', tvSymbol: AppConstants.symbolSilver),
-    _Commodity(name: 'Minyak', tvSymbol: AppConstants.symbolOil),
-    _Commodity(name: 'Gas', tvSymbol: AppConstants.symbolGas),
-    _Commodity(name: 'Tembaga', tvSymbol: AppConstants.symbolCopper),
-  ];
-
   int _selectedIndex = 0;
+
+  // Daftar instrumen komoditas & indeks EWF (TradingView Tickers)
+  final List<_Commodity> _commodities = const [
+    _Commodity(name: 'Emas (XAU)', tvSymbol: AppConstants.symbolGold),
+    _Commodity(name: 'Perak (XAG)', tvSymbol: AppConstants.symbolSilver),
+    _Commodity(name: 'Minyak Mentah (Oil)', tvSymbol: AppConstants.symbolOil),
+    _Commodity(name: 'Gas Alam (Gas)', tvSymbol: AppConstants.symbolGas),
+    _Commodity(name: 'Tembaga (Copper)', tvSymbol: AppConstants.symbolCopper),
+    _Commodity(name: 'Hang Seng (HSI)', tvSymbol: AppConstants.symbolHangSeng),
+  ];
 
   @override
   void initState() {
     super.initState();
-    // Karena length diambil dari _commodities.length, jumlah tab akan otomatis jadi 6!
     _tabController = TabController(length: _commodities.length, vsync: this);
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) return;
-      setState(() => _selectedIndex = _tabController.index);
+      if (!_tabController.indexIsChanging) {
+        setState(() {
+          _selectedIndex = _tabController.index;
+        });
+      }
     });
   }
 
@@ -50,7 +52,7 @@ class _CommodityChartScreenState extends State<CommodityChartScreen>
     final selected = _commodities[_selectedIndex];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F7),
+      backgroundColor: context.scaffoldBg,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,16 +64,16 @@ class _CommodityChartScreenState extends State<CommodityChartScreen>
                 children: [
                   _BackButton(),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Grafik Komoditas & Indeks', // Sedikit penyesuaian judul
+                          'Grafik Komoditas & Indeks',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
+                            color: context.textPrimary,
                           ),
                         ),
                       ],
@@ -140,8 +142,11 @@ class _CommodityChartScreenState extends State<CommodityChartScreen>
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFFF7941D) : Colors.white,
+                        color: isSelected ? const Color(0xFFF7941D) : context.cardBg,
                         borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFFF7941D) : context.borderColor,
+                        ),
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
@@ -156,7 +161,7 @@ class _CommodityChartScreenState extends State<CommodityChartScreen>
                         child: Text(
                           c.name,
                           style: TextStyle(
-                            color: isSelected ? Colors.white : const Color(0xFF64748B),
+                            color: isSelected ? Colors.white : context.textSecondary,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                             fontSize: 13,
                           ),
@@ -176,14 +181,16 @@ class _CommodityChartScreenState extends State<CommodityChartScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.cardBg,
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: context.borderColor),
                     boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(8), 
-                        blurRadius: 10, 
-                        offset: const Offset(0, 3)
-                      ),
+                      if (!context.isDarkMode)
+                        BoxShadow(
+                          color: Colors.black.withAlpha(8), 
+                          blurRadius: 10, 
+                          offset: const Offset(0, 3)
+                        ),
                     ],
                   ),
                   child: ClipRRect(
@@ -224,13 +231,14 @@ class _BackButton extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: context.borderColor),
           boxShadow: [
             BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 6, offset: const Offset(0, 1)),
           ],
         ),
-        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Color(0xFF0F172A)),
+        child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: context.textPrimary),
       ),
     );
   }

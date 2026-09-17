@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/services/history_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/number_formatter.dart';
 import '../viewmodels/pivot_point_viewmodel.dart';
 import '../widgets/newsmaker_table_widget.dart'; // <-- IMPORT TABEL NEWSMAKER
@@ -124,7 +125,7 @@ class _PivotPointViewState extends State<_PivotPointView>
     final viewModel = context.watch<PivotPointViewModel>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F7),
+      backgroundColor: context.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -141,18 +142,18 @@ class _PivotPointViewState extends State<_PivotPointView>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Pivot Point',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Masukkan data pasar untuk menghitung level support dan resistance.',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
+                      style: TextStyle(fontSize: 13, color: context.textSecondary, height: 1.4),
                     ),
                     const SizedBox(height: 24),
 
@@ -161,13 +162,13 @@ class _PivotPointViewState extends State<_PivotPointView>
                       height: 44,
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE2E8F0),
+                        color: context.isDarkMode ? AppColors.darkSurface : const Color(0xFFE2E8F0),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: TabBar(
                         controller: _tabController,
                         indicator: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardBg,
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
@@ -179,8 +180,8 @@ class _PivotPointViewState extends State<_PivotPointView>
                         ),
                         indicatorSize: TabBarIndicatorSize.tab,
                         dividerColor: Colors.transparent,
-                        labelColor: const Color(0xFF0F172A),
-                        unselectedLabelColor: const Color(0xFF64748B),
+                        labelColor: context.textPrimary,
+                        unselectedLabelColor: context.textSecondary,
                         labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
                         tabs: const [Tab(text: 'Manual'), Tab(text: 'Data Historis')],
@@ -192,15 +193,17 @@ class _PivotPointViewState extends State<_PivotPointView>
                     _isManual
                         ? Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: context.cardBg,
                               borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: context.borderColor),
                               boxShadow: [
-                                BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 12, offset: const Offset(0, 3)),
+                                if (!context.isDarkMode)
+                                  BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 12, offset: const Offset(0, 3)),
                               ],
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(18),
-                              child: _buildManualInputs(),
+                              child: _buildManualInputs(context),
                             ),
                           )
                         : const NewsmakerTableWidget(), // Panggil tabel di sini
@@ -249,16 +252,16 @@ class _PivotPointViewState extends State<_PivotPointView>
     );
   }
 
-  Widget _buildManualInputs() {
+  Widget _buildManualInputs(BuildContext context) {
     return Column(
       children: [
-        _inputField(label: 'HIGH', hint: '4145.00', controller: highController),
+        _inputField(label: 'HIGH', hint: '4145.00', controller: highController, context: context),
         const SizedBox(height: 20),
-        _inputField(label: 'LOW', hint: '4110.00', controller: lowController),
+        _inputField(label: 'LOW', hint: '4110.00', controller: lowController, context: context),
         const SizedBox(height: 20),
-        _inputField(label: 'CLOSE', hint: '4132.00', controller: closeController),
+        _inputField(label: 'CLOSE', hint: '4132.00', controller: closeController, context: context),
         const SizedBox(height: 20),
-        _inputField(label: 'OPEN (OP)', hint: '4118.00', controller: opController),
+        _inputField(label: 'OPEN (OP)', hint: '4118.00', controller: opController, context: context),
       ],
     );
   }
@@ -267,38 +270,39 @@ class _PivotPointViewState extends State<_PivotPointView>
     required String label,
     required String hint,
     required TextEditingController controller,
+    required BuildContext context,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF94A3B8),
+            color: context.textMuted,
             letterSpacing: 0.5,
           ),
         ),
         Container(
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.5)),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: context.borderColor, width: 1.5)),
           ),
           child: TextField(
             controller: controller,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [UsdNumberInputFormatter(allowFraction: true)],
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
+              color: context.textPrimary,
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(
+              hintStyle: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFFCBD5E1),
+                color: context.textMuted,
               ),
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
@@ -337,15 +341,16 @@ class _PivotPointViewState extends State<_PivotPointView>
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
+                  color: context.isDarkMode ? AppColors.darkSurface : const Color(0xFFE2E8F0),
                   borderRadius: BorderRadius.circular(14),
+                  border: context.isDarkMode ? Border.all(color: context.borderColor) : null,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Titik Pivot (PP)', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                    Text('Titik Pivot (PP)', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                     const SizedBox(height: 6),
-                    Text(formatNumber(data.pp), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                    Text(formatNumber(data.pp), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.textPrimary)),
                   ],
                 ),
               ),
@@ -355,15 +360,16 @@ class _PivotPointViewState extends State<_PivotPointView>
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
+                  color: context.isDarkMode ? AppColors.darkSurface : const Color(0xFFE2E8F0),
                   borderRadius: BorderRadius.circular(14),
+                  border: context.isDarkMode ? Border.all(color: context.borderColor) : null,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Rentang Harian', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                    Text('Rentang Harian', style: TextStyle(fontSize: 11, color: context.textSecondary)),
                     const SizedBox(height: 6),
-                    Text(formatNumber(data.range, decimals: 2), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                    Text(formatNumber(data.range, decimals: 2), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.textPrimary)),
                   ],
                 ),
               ),
@@ -396,50 +402,52 @@ class _PivotPointViewState extends State<_PivotPointView>
         // ── DAFTAR LEVEL & MIDPOINT ──
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardBg,
             borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: context.borderColor),
             boxShadow: [
-              BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 12, offset: const Offset(0, 3)),
+              if (!context.isDarkMode)
+                BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 12, offset: const Offset(0, 3)),
             ],
           ),
           child: Column(
             children: [
-              _levelRow('R4', data.r4, const Color(0xFFDC2626)),
-              _divider(),
-              _midpointRow('Mid R3/R4', mR4),
-              _divider(),
-              _levelRow('R3', data.r3, const Color(0xFFDC2626)),
-              _divider(),
-              _midpointRow('Mid R2/R3', mR3),
-              _divider(),
-              _levelRow('R2', data.r2, const Color(0xFFDC2626)),
-              _divider(),
-              _midpointRow('Mid R1/R2', mR2),
-              _divider(),
-              _levelRow('R1', data.r1, const Color(0xFFDC2626)),
-              _divider(),
-              _midpointRow('Mid PP/R1', mR1),
-              _divider(),
+              _levelRow('R4', data.r4, const Color(0xFFDC2626), context),
+              _theDivider(context),
+              _midpointRow('Mid R3/R4', mR4, context),
+              _theDivider(context),
+              _levelRow('R3', data.r3, const Color(0xFFDC2626), context),
+              _theDivider(context),
+              _midpointRow('Mid R2/R3', mR3, context),
+              _theDivider(context),
+              _levelRow('R2', data.r2, const Color(0xFFDC2626), context),
+              _theDivider(context),
+              _midpointRow('Mid R1/R2', mR2, context),
+              _theDivider(context),
+              _levelRow('R1', data.r1, const Color(0xFFDC2626), context),
+              _theDivider(context),
+              _midpointRow('Mid PP/R1', mR1, context),
+              _theDivider(context),
               
               // Pivot Point (Tengah)
-              _levelRow('PP', data.pp, const Color(0xFF0F172A), isPivot: true),
-              _divider(),
+              _levelRow('PP', data.pp, context.isDarkMode ? AppColors.primary : const Color(0xFF0F172A), context, isPivot: true),
+              _theDivider(context),
               
-              _midpointRow('Mid PP/S1', mS1),
-              _divider(),
-              _levelRow('S1', data.s1, const Color(0xFF16A34A)),
-              _divider(),
-              _midpointRow('Mid S1/S2', mS2),
-              _divider(),
-              _levelRow('S2', data.s2, const Color(0xFF16A34A)),
-              _divider(),
-              _midpointRow('Mid S2/S3', mS3),
-              _divider(),
-              _levelRow('S3', data.s3, const Color(0xFF16A34A)),
-              _divider(),
-              _midpointRow('Mid S3/S4', mS4),
-              _divider(),
-              _levelRow('S4', data.s4, const Color(0xFF16A34A)),
+              _midpointRow('Mid PP/S1', mS1, context),
+              _theDivider(context),
+              _levelRow('S1', data.s1, const Color(0xFF16A34A), context),
+              _theDivider(context),
+              _midpointRow('Mid S1/S2', mS2, context),
+              _theDivider(context),
+              _levelRow('S2', data.s2, const Color(0xFF16A34A), context),
+              _theDivider(context),
+              _midpointRow('Mid S2/S3', mS3, context),
+              _theDivider(context),
+              _levelRow('S3', data.s3, const Color(0xFF16A34A), context),
+              _theDivider(context),
+              _midpointRow('Mid S3/S4', mS4, context),
+              _theDivider(context),
+              _levelRow('S4', data.s4, const Color(0xFF16A34A), context),
             ],
           ),
         ),
@@ -452,9 +460,9 @@ class _PivotPointViewState extends State<_PivotPointView>
           child: OutlinedButton(
             onPressed: () => _saveToHistory(viewModel),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF0F172A),
-              side: const BorderSide(color: Color(0xFFE2E8F0)),
-              backgroundColor: Colors.white,
+              foregroundColor: context.textPrimary,
+              side: BorderSide(color: context.borderColor),
+              backgroundColor: context.cardBg,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
             child: const Row(
@@ -471,9 +479,11 @@ class _PivotPointViewState extends State<_PivotPointView>
     );
   }
 
-  Widget _levelRow(String label, double value, Color color, {bool isPivot = false}) {
+  Widget _levelRow(String label, double value, Color color, BuildContext context, {bool isPivot = false}) {
     return Container(
-      color: isPivot ? const Color(0xFFF8FAFC) : null,
+      color: isPivot
+          ? (context.isDarkMode ? Colors.white.withAlpha(8) : const Color(0xFFF8FAFC))
+          : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
         child: Row(
@@ -498,9 +508,9 @@ class _PivotPointViewState extends State<_PivotPointView>
   }
 
   // ── WIDGET KHUSUS UNTUK BARIS MIDPOINT ──
-  Widget _midpointRow(String label, double value) {
+  Widget _midpointRow(String label, double value, BuildContext context) {
     return Container(
-      color: const Color(0xFFF8FAFC).withAlpha(150),
+      color: context.isDarkMode ? Colors.white.withAlpha(5) : const Color(0xFFF8FAFC).withAlpha(150),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
@@ -508,19 +518,19 @@ class _PivotPointViewState extends State<_PivotPointView>
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF94A3B8),
+                color: context.textMuted,
                 fontStyle: FontStyle.italic,
               ),
             ),
             Text(
               formatNumber(value),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12, 
                 fontWeight: FontWeight.w600, 
-                color: Color(0xFF64748B),
+                color: context.textSecondary,
               ),
             ),
           ],
@@ -529,7 +539,7 @@ class _PivotPointViewState extends State<_PivotPointView>
     );
   }
 
-  Widget _divider() => const Divider(height: 0, color: Color(0xFFF1F5F9));
+  Widget _theDivider(BuildContext context) => Divider(height: 0, color: context.dividerColor);
 }
 
 class _BackButton extends StatelessWidget {
@@ -541,13 +551,14 @@ class _BackButton extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardBg,
           borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: context.borderColor),
           boxShadow: [
             BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 6, offset: const Offset(0, 1)),
           ],
         ),
-        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Color(0xFF0F172A)),
+        child: Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: context.textPrimary),
       ),
     );
   }
