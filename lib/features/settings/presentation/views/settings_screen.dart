@@ -106,66 +106,6 @@ class SettingsScreen extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
-                    // Quick toggle list tile
-                    Container(
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: borderColor),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withAlpha(25),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              themeController.isDarkMode
-                                  ? Icons.nightlight_round
-                                  : Icons.wb_sunny_rounded,
-                              size: 20,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Aktifkan Mode Gelap',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  themeController.isDarkMode
-                                      ? 'Tema gelap sedang aktif'
-                                      : 'Tema terang sedang aktif',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Switch.adaptive(
-                            value: themeController.isDarkMode,
-                            activeThumbColor: AppColors.primary,
-                            onChanged: (_) => themeController.toggleTheme(),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
 
                     // ── ABOUT SECTION ──────────────────────────────────
                     Text(

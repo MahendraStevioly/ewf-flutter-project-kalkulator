@@ -138,8 +138,7 @@ class _DashboardViewState extends State<_DashboardView> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  _buildPriceCard(context, viewModel),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 24), // Spacing pengganti Live Gold yang dihapus
                   _buildSectionHeader(
                     context,
                     title: 'Berita Terkini',
@@ -201,7 +200,7 @@ class _DashboardViewState extends State<_DashboardView> {
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
+          color: const Color(0xFF1E293B), // Tetap dipertahankan karena desain header solid navy
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
@@ -497,7 +496,6 @@ class _DashboardViewState extends State<_DashboardView> {
       height: 208,
       child: PageView.builder(
         controller: _newsPageController,
-        // Dihapus itemCount-nya agar infinity scroll berfungsi
         itemBuilder: (context, index) {
           // Logika Modulo untuk looping data
           final realIndex = index % newsList.length;
@@ -519,7 +517,7 @@ class _DashboardViewState extends State<_DashboardView> {
       width: 220,
       margin: const EdgeInsets.only(right: 14),
       decoration: BoxDecoration(
-        color: context.cardBg, // <--- Cukup ganti warnanya pake ini
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -541,12 +539,12 @@ class _DashboardViewState extends State<_DashboardView> {
               children: [
                 SizedBox(
                   height: 8,
-                  child: ColoredBox(color: context.chipBg), // <--- Ganti ini
+                  child: ColoredBox(color: context.chipBg),
                 ),
                 const SizedBox(height: 6),
                 SizedBox(
                   height: 12,
-                  child: ColoredBox(color: context.chipBg), // <--- Dan ini
+                  child: ColoredBox(color: context.chipBg),
                 ),
               ],
             ),
@@ -557,6 +555,11 @@ class _DashboardViewState extends State<_DashboardView> {
   }
 
   Widget _buildFeatureList(BuildContext context) {
+    // Definisi warna bg icon yang dinamis
+    final bgIconColor = context.isDarkMode 
+        ? AppColors.primary.withAlpha(35) 
+        : const Color(0xFFFFF3E0);
+
     return Container(
       decoration: BoxDecoration(
         color: context.cardBg,
@@ -573,7 +576,7 @@ class _DashboardViewState extends State<_DashboardView> {
       ),
       child: Column(
         children: [
-          // ── Item 1: Kalkulator Emas Fisik (tetap sama) ──
+          // ── Item 1: Kalkulator Emas Fisik ──
           _FeatureListTile(
             icon: Icons.diamond_outlined,
             title: 'Kalkulator Emas Fisik',
@@ -583,7 +586,7 @@ class _DashboardViewState extends State<_DashboardView> {
             onTap: () =>
                 Navigator.of(context).pushNamed(AppRoutes.goldCalculator),
           ),
-          const Divider(height: 0, indent: 64, color: Color(0xFFF1F5F9)),
+          Divider(height: 0, indent: 64, color: context.dividerColor),
 
           // ── Item 2: Konsep Transaksi (Accordion) ──
           Theme(
@@ -597,7 +600,7 @@ class _DashboardViewState extends State<_DashboardView> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3E0),
+                  color: bgIconColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -606,15 +609,15 @@ class _DashboardViewState extends State<_DashboardView> {
                   size: 22,
                 ),
               ),
-              title: const Text(
+              title: Text(
                 'Konsep Transaksi',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: context.textPrimary,
                 ),
               ),
-              subtitle: const Text(
+              subtitle: Text(
                 'Pilih metode analisa & kalkulasi',
                 style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
               ),
@@ -623,7 +626,9 @@ class _DashboardViewState extends State<_DashboardView> {
                   decoration: const BoxDecoration(color: Color(0xFFF8FAFC)),
                   child: Column(
                     children: [
-                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      Divider(height: 1, color: context.dividerColor),
+                      
+                      // ── Sub-menu 1: Nest ──
                       Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -647,17 +652,18 @@ class _DashboardViewState extends State<_DashboardView> {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: context.cardBg, // Diubah jadi dinamis
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: const Color(0xFFE2E8F0),
                                     ),
                                     boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withAlpha(4),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
+                                      if (!context.isDarkMode)
+                                        BoxShadow(
+                                          color: Colors.black.withAlpha(4),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
                                     ],
                                   ),
                                   child: const Icon(
@@ -667,13 +673,13 @@ class _DashboardViewState extends State<_DashboardView> {
                                   ),
                                 ),
                                 const SizedBox(width: 14),
-                                const Expanded(
+                                Expanded(
                                   child: Text(
                                     'Nest',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF334155),
+                                      color: context.textPrimary, // Diubah jadi dinamis
                                     ),
                                   ),
                                 ),
@@ -710,17 +716,18 @@ class _DashboardViewState extends State<_DashboardView> {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: context.cardBg, // Diubah jadi dinamis
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: const Color(0xFFE2E8F0),
                                     ),
                                     boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withAlpha(4),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
+                                      if (!context.isDarkMode)
+                                        BoxShadow(
+                                          color: Colors.black.withAlpha(4),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
                                     ],
                                   ),
                                   child: const Icon(
@@ -730,13 +737,13 @@ class _DashboardViewState extends State<_DashboardView> {
                                   ),
                                 ),
                                 const SizedBox(width: 14),
-                                const Expanded(
+                                Expanded(
                                   child: Text(
                                     'Pivot Point',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF334155),
+                                      color: context.textPrimary, // Diubah jadi dinamis
                                     ),
                                   ),
                                 ),
@@ -757,9 +764,9 @@ class _DashboardViewState extends State<_DashboardView> {
               ],
             ),
           ),
-          const Divider(height: 0, indent: 64, color: Color(0xFFF1F5F9)),
+          Divider(height: 0, indent: 64, color: context.dividerColor),
 
-          // ── Item 3: Grafik Harga Komoditas (tetap sama) ──
+          // ── Item 3: Grafik Harga Komoditas ──
           _FeatureListTile(
             icon: Icons.bar_chart_rounded,
             title: 'Grafik Harga Komoditas',
@@ -944,7 +951,7 @@ class _DashboardViewState extends State<_DashboardView> {
     required VoidCallback onTap,
   }) {
     final Color valueColor = isNeutral
-        ? const Color(0xFF64748B)
+        ? context.textSecondary
         : isPositive
         ? const Color(0xFF16A34A)
         : const Color(0xFFDC2626);

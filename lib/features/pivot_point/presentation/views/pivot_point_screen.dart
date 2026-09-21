@@ -221,6 +221,7 @@ class _PivotPointViewState extends State<_PivotPointView>
                     ),
                     const SizedBox(height: 24),
 
+                    // NAVBAR TABBAR YANG UDAH DI-FIX DARK MODE
                     Container(
                       height: 44,
                       padding: const EdgeInsets.all(4),
@@ -233,14 +234,15 @@ class _PivotPointViewState extends State<_PivotPointView>
                       child: TabBar(
                         controller: _tabController,
                         indicator: BoxDecoration(
-                          color: context.cardBg,
+                          color: context.isDarkMode ? AppColors.darkBorder : Colors.white,
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha(15),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
+                            if (!context.isDarkMode)
+                              BoxShadow(
+                                color: Colors.black.withAlpha(15),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
                           ],
                         ),
                         indicatorSize: TabBarIndicatorSize.tab,
@@ -270,11 +272,12 @@ class _PivotPointViewState extends State<_PivotPointView>
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(color: context.borderColor),
                               boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withAlpha(8),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 3),
-                                ),
+                                if (!context.isDarkMode)
+                                  BoxShadow(
+                                    color: Colors.black.withAlpha(8),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 3),
+                                  ),
                               ],
                             ),
                             child: Padding(
@@ -382,6 +385,7 @@ class _PivotPointViewState extends State<_PivotPointView>
     );
   }
 
+  // INPUT FIELD YANG UDAH DI-FIX DARK MODE (Garis Bawah)
   Widget _inputField({
     required String label,
     required String hint,
@@ -401,9 +405,9 @@ class _PivotPointViewState extends State<_PivotPointView>
           ),
         ),
         Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(
-              bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+              bottom: BorderSide(color: context.borderColor, width: 1.5),
             ),
           ),
           child: TextField(
@@ -566,11 +570,12 @@ class _PivotPointViewState extends State<_PivotPointView>
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: context.borderColor),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(8),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
-              ),
+              if (!context.isDarkMode)
+                BoxShadow(
+                  color: Colors.black.withAlpha(8),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
             ],
           ),
           child: Column(

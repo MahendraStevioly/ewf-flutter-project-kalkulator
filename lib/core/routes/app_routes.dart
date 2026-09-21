@@ -4,7 +4,6 @@ import '../../features/dashboard/presentation/views/dashboard_screen.dart';
 import '../../features/gold_calculator/presentation/views/gold_calculator_result_view.dart';
 import '../../features/gold_calculator/presentation/views/gold_calculator_screen.dart';
 import '../../features/history/presentation/views/history_screen.dart';
-import '../../features/live_gold/presentation/views/live_gold_screen.dart';
 import '../../features/pivot_point/presentation/views/pivot_point_screen.dart';
 import '../../features/settings/presentation/views/settings_screen.dart';
 import '../../features/history/presentation/views/gold_detail_screen.dart';
@@ -50,11 +49,6 @@ class AppRouter {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const PivotPointScreen(),
-        );
-      case AppRoutes.liveGold:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => const LiveGoldScreen(),
         );
       case AppRoutes.history:
         return MaterialPageRoute(

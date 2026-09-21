@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import '../../../../core/theme/app_theme.dart'; // Sesuaikan path-nya ya
 
 class TradingViewWidget extends StatefulWidget {
   final String symbol;
   final double height;
 
   const TradingViewWidget({Key? key, required this.symbol, this.height = 400})
-    : super(key: key);
+      : super(key: key);
 
   @override
   State<TradingViewWidget> createState() => _TradingViewWidgetState();
@@ -15,6 +16,7 @@ class TradingViewWidget extends StatefulWidget {
 class _TradingViewWidgetState extends State<TradingViewWidget> {
   late final WebViewController _controller;
   bool _isLoading = true;
+  bool? _isCurrentlyDark; // Buat nyimpen status tema saat ini
 
   @override
   void initState() {
@@ -23,6 +25,7 @@ class _TradingViewWidgetState extends State<TradingViewWidget> {
     // Inisialisasi controller HANYA SATU KALI
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.transparent) // <--- TAMBAHIN BARIS INI BROK!
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (String url) {
@@ -35,28 +38,49 @@ class _TradingViewWidgetState extends State<TradingViewWidget> {
         ),
       );
 
-    // Muat grafik untuk pertama kali
-    _loadHtmlForSymbol(widget.symbol);
+    // Pemanggilan _loadHtmlForSymbol dihapus dari sini, 
+    // karena dipindah ke didChangeDependencies biar bisa baca tema
   }
 
   // ==============================================================
-  // MAGIC HAPPENS HERE:
-  // Fungsi ini dipanggil otomatis oleh Flutter jika parent (Screen)
-  // mengirimkan symbol baru (misal user klik tab Minyak)
+  // FUNGSI SAKTI: 
+  // Kepanggil pas pertama kali build & tiap kali user ganti tema (Dark/Light)
   // ==============================================================
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // Cek apakah HP user lagi pakai dark mode
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Kalau temanya berubah, reload WebView-nya
+    if (_isCurrentlyDark != isDark) {
+      _isCurrentlyDark = isDark;
+      setState(() => _isLoading = true);
+      _loadHtmlForSymbol(widget.symbol, isDark);
+    }
+  }
+
   @override
   void didUpdateWidget(covariant TradingViewWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.symbol != widget.symbol) {
       setState(() {
-        _isLoading = true; // Munculkan indikator loading lagi
+        _isLoading = true;
       });
-      _loadHtmlForSymbol(widget.symbol); // Tembak HTML dengan simbol baru!
+      // Tembak HTML dengan simbol baru dan tema saat ini
+      _loadHtmlForSymbol(widget.symbol, _isCurrentlyDark ?? false); 
     }
   }
 
-  // Fungsi pembuat HTML agar bisa dipanggil berulang kali tanpa merusak WebView
-  void _loadHtmlForSymbol(String symbol) {
+  // ==============================================================
+  // HTML BUILDER YANG UDAH DIBIKIN DINAMIS UNTUK DARK MODE
+  // ==============================================================
+  void _loadHtmlForSymbol(String symbol, bool isDarkMode) {
+    // Siapin warna background dasar biar ga ada flash putih pas loading
+    final bgColor = isDarkMode ? '#0F172A' : '#ffffff'; 
+    final theme = isDarkMode ? 'dark' : 'light';
+
     final String htmlContent =
         '''
       <!DOCTYPE html>
@@ -64,7 +88,8 @@ class _TradingViewWidgetState extends State<TradingViewWidget> {
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <style>
-          body { margin: 0; padding: 0; background-color: #ffffff; }
+          /* Background body menyesuaikan tema */
+          body { margin: 0; padding: 0; background-color: $bgColor; }
           #tradingview-widget { height: 100vh; width: 100vw; }
         </style>
       </head>
@@ -77,7 +102,7 @@ class _TradingViewWidgetState extends State<TradingViewWidget> {
             "symbol": "$symbol",
             "interval": "D",
             "timezone": "Asia/Jakarta",
-            "theme": "light",
+            "theme": "$theme", /* TEMA SUDAH DINAMIS BROK! */
             "style": "1",
             "locale": "id",
             "enable_publishing": false,
@@ -101,8 +126,16 @@ class _TradingViewWidgetState extends State<TradingViewWidget> {
       width: double.infinity,
       child: Stack(
         children: [
+          // Supaya saat loading, background di belakang indikator nggak bolong
+          // biar nggak putih pas loading
+          Container(color: context.scaffoldBg),
           WebViewWidget(controller: _controller),
-          if (_isLoading) const Center(child: CircularProgressIndicator()),
+          if (_isLoading)
+            Center(
+              child: CircularProgressIndicator(
+                color: const Color(0xFFF7941D), // Warna indikator oranye khas app lu
+              ),
+            ),
         ],
       ),
     );
