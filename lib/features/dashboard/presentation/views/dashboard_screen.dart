@@ -11,6 +11,7 @@ import '../viewmodels/dashboard_viewmodel.dart';
 import '../widgets/news_detail_bottom_sheet.dart';
 import '../widgets/news_card.dart';
 import 'package:kalkulator_pivot/features/news/presentation/viewmodels/news_viewmodel.dart';
+import 'package:kalkulator_pivot/features/nest/presentation/views/nest_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -40,8 +41,18 @@ class _DashboardViewState extends State<_DashboardView> {
 
   String _getFormattedDate(DateTime now) {
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     return '${now.day} ${months[now.month - 1]} ${now.year}';
   }
@@ -60,20 +71,17 @@ class _DashboardViewState extends State<_DashboardView> {
 
     // Set initialPage ke angka besar agar bisa di-swipe bolak-balik sejak awal
     _newsPageController = PageController(
-      initialPage: 6000, 
+      initialPage: 6000,
       viewportFraction: 0.75,
     );
 
-    _clockTimer = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) {
-        if (mounted) {
-          setState(() {
-            _currentTime = DateTime.now();
-          });
-        }
-      },
-    );
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {
+          _currentTime = DateTime.now();
+        });
+      }
+    });
 
     _newsAutoSlideTimer = Timer.periodic(
       const Duration(seconds: 5),
@@ -166,7 +174,8 @@ class _DashboardViewState extends State<_DashboardView> {
                     context,
                     title: 'Riwayat Terbaru',
                     actionLabel: 'Lihat Semua →',
-                    onAction: () => Navigator.of(context).pushNamed(AppRoutes.history),
+                    onAction: () =>
+                        Navigator.of(context).pushNamed(AppRoutes.history),
                   ),
                   const SizedBox(height: 12),
                   _buildRecentHistory(context),
@@ -243,7 +252,8 @@ class _DashboardViewState extends State<_DashboardView> {
                 ),
                 InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.history),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.history),
                   child: Container(
                     width: 38,
                     height: 38,
@@ -351,7 +361,10 @@ class _DashboardViewState extends State<_DashboardView> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: context.isDarkMode
                           ? const Color(0xFF16A34A).withAlpha(40)
@@ -472,10 +485,7 @@ class _DashboardViewState extends State<_DashboardView> {
           child: Text(
             viewModel.newsError ?? 'Tidak ada berita saat ini',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.gray,
-              fontSize: 13,
-            ),
+            style: const TextStyle(color: AppColors.gray, fontSize: 13),
           ),
         ),
       );
@@ -489,7 +499,7 @@ class _DashboardViewState extends State<_DashboardView> {
         controller: _newsPageController,
         // Dihapus itemCount-nya agar infinity scroll berfungsi
         itemBuilder: (context, index) {
-          // Logika Modulo untuk looping data 
+          // Logika Modulo untuk looping data
           final realIndex = index % newsList.length;
           final item = newsList[realIndex];
 
@@ -504,7 +514,7 @@ class _DashboardViewState extends State<_DashboardView> {
     );
   }
 
-Widget _buildNewsShimmer() { 
+  Widget _buildNewsShimmer() {
     return Container(
       width: 220,
       margin: const EdgeInsets.only(right: 14),
@@ -519,7 +529,9 @@ Widget _buildNewsShimmer() {
             height: 120,
             decoration: BoxDecoration(
               color: context.chipBg, // <--- Ganti ini juga
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(15),
+              ),
             ),
           ),
           Padding(
@@ -568,7 +580,8 @@ Widget _buildNewsShimmer() {
             subtitle: 'Hitung estimasi keuntungan emas fisik',
             iconColor: AppColors.primary,
             iconBg: const Color(0xFFFFF3E0),
-            onTap: () => Navigator.of(context).pushNamed(AppRoutes.goldCalculator),
+            onTap: () =>
+                Navigator.of(context).pushNamed(AppRoutes.goldCalculator),
           ),
           const Divider(height: 0, indent: 64, color: Color(0xFFF1F5F9)),
 
@@ -576,7 +589,10 @@ Widget _buildNewsShimmer() {
           Theme(
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
-              tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+              tilePadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 2,
+              ),
               leading: Container(
                 width: 44,
                 height: 44,
@@ -584,7 +600,11 @@ Widget _buildNewsShimmer() {
                   color: const Color(0xFFFFF3E0),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.candlestick_chart_rounded, color: AppColors.primary, size: 22),
+                child: const Icon(
+                  Icons.candlestick_chart_rounded,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
               ),
               title: const Text(
                 'Konsep Transaksi',
@@ -596,16 +616,11 @@ Widget _buildNewsShimmer() {
               ),
               subtitle: const Text(
                 'Pilih metode analisa & kalkulasi',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF64748B),
-                ),
+                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
               ),
               children: [
                 Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF8FAFC),
-                  ),
+                  decoration: const BoxDecoration(color: Color(0xFFF8FAFC)),
                   child: Column(
                     children: [
                       const Divider(height: 1, color: Color(0xFFF1F5F9)),
@@ -613,11 +628,20 @@ Widget _buildNewsShimmer() {
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: () {
-                            // TODO: Navigasi ke Nest
-                            print('Navigasi ke Nest');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const NestScreen(),
+                              ),
+                            );
                           },
                           child: Padding(
-                            padding: const EdgeInsets.only(left: 72, right: 16, top: 12, bottom: 12),
+                            padding: const EdgeInsets.only(
+                              left: 72,
+                              right: 16,
+                              top: 12,
+                              bottom: 12,
+                            ),
                             child: Row(
                               children: [
                                 Container(
@@ -625,7 +649,9 @@ Widget _buildNewsShimmer() {
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    border: Border.all(
+                                      color: const Color(0xFFE2E8F0),
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withAlpha(4),
@@ -634,7 +660,11 @@ Widget _buildNewsShimmer() {
                                       ),
                                     ],
                                   ),
-                                  child: const Icon(Icons.hub_outlined, size: 16, color: AppColors.primary),
+                                  child: const Icon(
+                                    Icons.hub_outlined,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                                 const SizedBox(width: 14),
                                 const Expanded(
@@ -647,19 +677,34 @@ Widget _buildNewsShimmer() {
                                     ),
                                   ),
                                 ),
-                                const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 18),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  color: Color(0xFF94A3B8),
+                                  size: 18,
+                                ),
                               ],
                             ),
                           ),
                         ),
                       ),
-                      const Divider(height: 1, indent: 72, color: Color(0xFFE2E8F0)),
+                      const Divider(
+                        height: 1,
+                        indent: 72,
+                        color: Color(0xFFE2E8F0),
+                      ),
                       Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: () => Navigator.of(context).pushNamed(AppRoutes.pivotPoint),
+                          onTap: () => Navigator.of(
+                            context,
+                          ).pushNamed(AppRoutes.pivotPoint),
                           child: Padding(
-                            padding: const EdgeInsets.only(left: 72, right: 16, top: 12, bottom: 12),
+                            padding: const EdgeInsets.only(
+                              left: 72,
+                              right: 16,
+                              top: 12,
+                              bottom: 12,
+                            ),
                             child: Row(
                               children: [
                                 Container(
@@ -667,7 +712,9 @@ Widget _buildNewsShimmer() {
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    border: Border.all(
+                                      color: const Color(0xFFE2E8F0),
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withAlpha(4),
@@ -676,7 +723,11 @@ Widget _buildNewsShimmer() {
                                       ),
                                     ],
                                   ),
-                                  child: const Icon(Icons.show_chart_rounded, size: 16, color: AppColors.primary),
+                                  child: const Icon(
+                                    Icons.show_chart_rounded,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                                 const SizedBox(width: 14),
                                 const Expanded(
@@ -689,7 +740,11 @@ Widget _buildNewsShimmer() {
                                     ),
                                   ),
                                 ),
-                                const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 18),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  color: Color(0xFF94A3B8),
+                                  size: 18,
+                                ),
                               ],
                             ),
                           ),
@@ -711,7 +766,8 @@ Widget _buildNewsShimmer() {
             subtitle: 'Chart live dari TradingView',
             iconColor: AppColors.primary,
             iconBg: const Color(0xFFFFF3E0),
-            onTap: () => Navigator.of(context).pushNamed(AppRoutes.commodityChart),
+            onTap: () =>
+                Navigator.of(context).pushNamed(AppRoutes.commodityChart),
           ),
         ],
       ),
@@ -740,7 +796,9 @@ Widget _buildNewsShimmer() {
               ),
               child: Icon(
                 Icons.settings_rounded,
-                color: context.isDarkMode ? AppColors.primary : const Color(0xFF334155),
+                color: context.isDarkMode
+                    ? AppColors.primary
+                    : const Color(0xFF334155),
                 size: 21,
               ),
             ),
@@ -838,11 +896,14 @@ Widget _buildNewsShimmer() {
             tile = _buildHistoryTile(
               context: context,
               isGold: true,
-              title: 'HB \$${g.hb.toStringAsFixed(2)}  |  HJ \$${g.hj.toStringAsFixed(2)}',
+              title:
+                  'HB \$${g.hb.toStringAsFixed(2)}  |  HJ \$${g.hj.toStringAsFixed(2)}',
               subtitle: _formatDateTime(g.timestamp),
               value: _formatCurrencyShort(g.keuntunganBersih),
               isPositive: g.keuntunganBersih >= 0,
-              onTap: () => Navigator.of(context).pushNamed(AppRoutes.goldDetail, arguments: g),
+              onTap: () => Navigator.of(
+                context,
+              ).pushNamed(AppRoutes.goldDetail, arguments: g),
             );
           } else {
             final p = item['entry'] as PivotHistoryEntry;
@@ -854,7 +915,9 @@ Widget _buildNewsShimmer() {
               value: p.recommendation,
               isPositive: p.recommendation == 'BUY',
               isNeutral: p.recommendation == 'NEUTRAL',
-              onTap: () => Navigator.of(context).pushNamed(AppRoutes.pivotDetail, arguments: p),
+              onTap: () => Navigator.of(
+                context,
+              ).pushNamed(AppRoutes.pivotDetail, arguments: p),
             );
           }
 
@@ -887,8 +950,12 @@ Widget _buildNewsShimmer() {
         : const Color(0xFFDC2626);
 
     final bgBadgeColor = isGold
-        ? (context.isDarkMode ? AppColors.primary.withAlpha(35) : const Color(0xFFFFF3E0))
-        : (context.isDarkMode ? const Color(0xFF3B82F6).withAlpha(35) : const Color(0xFFEFF6FF));
+        ? (context.isDarkMode
+              ? AppColors.primary.withAlpha(35)
+              : const Color(0xFFFFF3E0))
+        : (context.isDarkMode
+              ? const Color(0xFF3B82F6).withAlpha(35)
+              : const Color(0xFFEFF6FF));
 
     return InkWell(
       onTap: onTap,
@@ -904,7 +971,9 @@ Widget _buildNewsShimmer() {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                isGold ? Icons.diamond_outlined : Icons.candlestick_chart_rounded,
+                isGold
+                    ? Icons.diamond_outlined
+                    : Icons.candlestick_chart_rounded,
                 size: 20,
                 color: isGold ? AppColors.primary : const Color(0xFF3B82F6),
               ),
@@ -927,10 +996,7 @@ Widget _buildNewsShimmer() {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: context.textMuted,
-                    ),
+                    style: TextStyle(fontSize: 11, color: context.textMuted),
                   ),
                 ],
               ),
@@ -951,8 +1017,18 @@ Widget _buildNewsShimmer() {
 
   String _formatDateTime(DateTime dt) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');

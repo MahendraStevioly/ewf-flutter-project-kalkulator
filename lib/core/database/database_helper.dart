@@ -85,6 +85,17 @@ class DatabaseHelper {
       'setting_key': 'theme_mode',
       'setting_value': 'light'
     });
+
+    // 5. Tabel Riwayat Nest (High dan Low dihapus)
+    await db.execute('''
+      CREATE TABLE nest_history (
+        id TEXT PRIMARY KEY,
+        timestamp TEXT NOT NULL,
+        close REAL NOT NULL,
+        openingPrice REAL NOT NULL,
+        recommendation TEXT NOT NULL
+      )
+    ''');
   }
 
   Future close() async {

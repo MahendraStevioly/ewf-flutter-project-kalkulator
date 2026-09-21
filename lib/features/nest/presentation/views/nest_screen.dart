@@ -1,55 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/services/history_service.dart';
+import 'package:flutter/services.dart';
+import 'package:kalkulator_pivot/features/pivot_point/presentation/widgets/newsmaker_table_widget.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/number_formatter.dart';
-import 'package:flutter/services.dart';
-import '../viewmodels/pivot_point_viewmodel.dart';
-import '../widgets/newsmaker_table_widget.dart';
+import '../viewmodels/nest_viewmodel.dart';
+import 'package:kalkulator_pivot/core/services/history_service.dart';
 
-class PivotPointScreen extends StatelessWidget {
-  const PivotPointScreen({super.key});
+class NestScreen extends StatelessWidget {
+  const NestScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => PivotPointViewModel(),
-      child: const _PivotPointView(),
+      create: (_) => NestViewModel(),
+      child: const _NestView(),
     );
   }
 }
 
-class _PivotPointView extends StatefulWidget {
-  const _PivotPointView();
+class _NestView extends StatefulWidget {
+  const _NestView();
 
   @override
-  State<_PivotPointView> createState() => _PivotPointViewState();
+  State<_NestView> createState() => _NestViewState();
 }
 
-class _PivotPointViewState extends State<_PivotPointView>
+class _NestViewState extends State<_NestView>
     with SingleTickerProviderStateMixin {
-  late TextEditingController highController;
-  late TextEditingController lowController;
   late TextEditingController closeController;
   late TextEditingController opController;
   late TabController _tabController;
   bool _isManual = true;
 
-  PivotPointViewModel? _viewModelRef;
+  NestViewModel? _viewModelRef;
   bool _hasInjectedInitialData = false;
 
   @override
   void initState() {
     super.initState();
 
-    highController = TextEditingController();
-    lowController = TextEditingController();
     closeController = TextEditingController();
     opController = TextEditingController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _viewModelRef = context.read<PivotPointViewModel>();
+      _viewModelRef = context.read<NestViewModel>();
       _viewModelRef?.addListener(_onViewModelUpdated);
     });
 
@@ -57,7 +53,7 @@ class _PivotPointViewState extends State<_PivotPointView>
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) return;
       setState(() => _isManual = _tabController.index == 0);
-      context.read<PivotPointViewModel>().setManualMode(_isManual);
+      context.read<NestViewModel>().setManualMode(_isManual);
     });
   }
 
@@ -68,8 +64,6 @@ class _PivotPointViewState extends State<_PivotPointView>
       final latestScrapedData = _viewModelRef!.newsmakerHistories.first;
 
       setState(() {
-        highController.text = latestScrapedData.high.toStringAsFixed(2);
-        lowController.text = latestScrapedData.low.toStringAsFixed(2);
         closeController.text = latestScrapedData.close.toStringAsFixed(2);
       });
       _hasInjectedInitialData = true;
@@ -79,8 +73,6 @@ class _PivotPointViewState extends State<_PivotPointView>
   @override
   void dispose() {
     _viewModelRef?.removeListener(_onViewModelUpdated);
-    highController.dispose();
-    lowController.dispose();
     closeController.dispose();
     opController.dispose();
     _tabController.dispose();
@@ -93,11 +85,9 @@ class _PivotPointViewState extends State<_PivotPointView>
     return const Color(0xFF64748B);
   }
 
-  Future<void> _calculate(PivotPointViewModel viewModel) async {
+  Future<void> _calculate(NestViewModel viewModel) async {
     if (_isManual) {
       await viewModel.calculateManual(
-        high: parseDecimal(highController.text),
-        low: parseDecimal(lowController.text),
         close: parseDecimal(closeController.text),
         openingPrice: parseDecimal(opController.text),
       );
@@ -115,32 +105,23 @@ class _PivotPointViewState extends State<_PivotPointView>
     }
   }
 
-  void _saveToHistory(PivotPointViewModel viewModel) {
+  void _saveToHistory(NestViewModel viewModel) {
     final data = viewModel.result;
     if (data == null) return;
-    final entry = PivotHistoryEntry(
+
+    final entry = NestHistoryEntry(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       timestamp: DateTime.now(),
-      high: data.high,
-      low: data.low,
       close: data.close,
       openingPrice: data.openingPrice,
-      pp: data.pp,
-      range: data.range,
-      r1: data.r1,
-      r2: data.r2,
-      r3: data.r3,
-      r4: data.r4,
-      s1: data.s1,
-      s2: data.s2,
-      s3: data.s3,
-      s4: data.s4,
       recommendation: data.recommendation,
     );
-    HistoryService.instance.addPivot(entry);
+
+    HistoryService.instance.addNest(entry);
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Hasil pivot berhasil disimpan ke riwayat'),
+        content: Text('Hasil Nest berhasil disimpan ke riwayat'),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Color(0xFF16A34A),
       ),
@@ -149,7 +130,7 @@ class _PivotPointViewState extends State<_PivotPointView>
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<PivotPointViewModel>();
+    final viewModel = context.watch<NestViewModel>();
 
     return Scaffold(
       backgroundColor: context.scaffoldBg,
@@ -169,7 +150,7 @@ class _PivotPointViewState extends State<_PivotPointView>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Pivot Point',
+                      'Konsep Nest',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
@@ -177,6 +158,7 @@ class _PivotPointViewState extends State<_PivotPointView>
                       ),
                     ),
                     const SizedBox(height: 4),
+
                     RichText(
                       text: TextSpan(
                         style: const TextStyle(
@@ -185,8 +167,19 @@ class _PivotPointViewState extends State<_PivotPointView>
                           height: 1.5,
                         ),
                         children: [
+                          const TextSpan(
+                            text: 'Konsep Nest membandingkan harga ',
+                          ),
                           TextSpan(
-                            text: 'Pivot Point',
+                            text: 'Pembukaan (Open) hari ini ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                          const TextSpan(text: 'dengan harga '),
+                          TextSpan(
+                            text: 'Penutupan (Close) kemarin ',
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: context.textPrimary,
@@ -194,10 +187,10 @@ class _PivotPointViewState extends State<_PivotPointView>
                           ),
                           const TextSpan(
                             text:
-                                ' adalah harga wajar atau harga pasaran, untuk menentukan aksi beli dan jual yang mengacu pada harga pembukaan (Open).\n\n',
+                                'untuk menentukan aksi beli dan jual secara ringkas.\n\n',
                           ),
                           const TextSpan(
-                            text: '\u2022  Open < Pivot Point  \u2192  ',
+                            text: '\u2022  Open < Close  \u2192  ',
                           ),
                           const TextSpan(
                             text: 'BUY\n',
@@ -207,7 +200,7 @@ class _PivotPointViewState extends State<_PivotPointView>
                             ),
                           ),
                           const TextSpan(
-                            text: '\u2022  Open > Pivot Point  \u2192  ',
+                            text: '\u2022  Open > Close  \u2192  ',
                           ),
                           const TextSpan(
                             text: 'SELL',
@@ -294,6 +287,7 @@ class _PivotPointViewState extends State<_PivotPointView>
                             onNextPage: viewModel.nextPage,
                             onPrevPage: viewModel.previousPage,
                           ),
+
                     if (_isManual) ...[
                       const SizedBox(height: 24),
                       SizedBox(
@@ -321,7 +315,7 @@ class _PivotPointViewState extends State<_PivotPointView>
                                   ),
                                 )
                               : const Text(
-                                  'HITUNG PIVOT',
+                                  'HITUNG NEST',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
@@ -353,28 +347,14 @@ class _PivotPointViewState extends State<_PivotPointView>
       children: [
         _inputField(
           context: context,
-          label: 'HIGH',
-          hint: '',
-          controller: highController,
-        ),
-        const SizedBox(height: 20),
-        _inputField(
-          context: context,
-          label: 'LOW',
-          hint: '',
-          controller: lowController,
-        ),
-        const SizedBox(height: 20),
-        _inputField(
-          context: context,
-          label: 'CLOSE',
+          label: 'CLOSE (KEMARIN)',
           hint: '',
           controller: closeController,
         ),
         const SizedBox(height: 20),
         _inputField(
           context: context,
-          label: 'OPEN (OP)',
+          label: 'OPEN (HARI INI)',
           hint: '',
           controller: opController,
         ),
@@ -435,20 +415,10 @@ class _PivotPointViewState extends State<_PivotPointView>
     );
   }
 
-  Widget _buildResults(BuildContext context, PivotPointViewModel viewModel) {
+  Widget _buildResults(BuildContext context, NestViewModel viewModel) {
     final data = viewModel.result!;
     final rec = data.recommendation;
     final signalColor = _signalColor(rec);
-
-    final mR4 = (data.r3 + data.r4) / 2;
-    final mR3 = (data.r2 + data.r3) / 2;
-    final mR2 = (data.r1 + data.r2) / 2;
-    final mR1 = (data.pp + data.r1) / 2;
-
-    final mS1 = (data.pp + data.s1) / 2;
-    final mS2 = (data.s1 + data.s2) / 2;
-    final mS3 = (data.s2 + data.s3) / 2;
-    final mS4 = (data.s3 + data.s4) / 2;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,12 +441,12 @@ class _PivotPointViewState extends State<_PivotPointView>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Titik Pivot (PP)',
+                      'Open (Hari Ini)',
                       style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      formatNumber(data.pp),
+                      formatNumber(data.openingPrice),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
@@ -504,12 +474,12 @@ class _PivotPointViewState extends State<_PivotPointView>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Rentang Harian',
+                      'Close (Kemarin)',
                       style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      formatNumber(data.range, decimals: 2),
+                      formatNumber(data.close),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
@@ -524,93 +494,35 @@ class _PivotPointViewState extends State<_PivotPointView>
         ),
         const SizedBox(height: 12),
 
-        if (viewModel.isManualMode) ...[
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: signalColor,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'REKOMENDASI ACTION',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  rec,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-
         Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: context.cardBg,
+            color: signalColor,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: context.borderColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(8),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
-              ),
-            ],
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _levelRow('R4', data.r4, const Color(0xFFDC2626)),
-              _theDivider(context),
-              _midpointRow('Mid R3/R4', mR4, context),
-              _theDivider(context),
-              _levelRow('R3', data.r3, const Color(0xFFDC2626)),
-              _theDivider(context),
-              _midpointRow('Mid R2/R3', mR3, context),
-              _theDivider(context),
-              _levelRow('R2', data.r2, const Color(0xFFDC2626)),
-              _theDivider(context),
-              _midpointRow('Mid R1/R2', mR2, context),
-              _theDivider(context),
-              _levelRow('R1', data.r1, const Color(0xFFDC2626)),
-              _theDivider(context),
-              _midpointRow('Mid PP/R1', mR1, context),
-              _theDivider(context),
-
-              // Pivot Point (Tengah)
-              _levelRow('PP', data.pp, context.textPrimary, isPivot: true),
-              _theDivider(context),
-
-              _midpointRow('Mid PP/S1', mS1, context),
-              _theDivider(context),
-              _levelRow('S1', data.s1, const Color(0xFF16A34A)),
-              _theDivider(context),
-              _midpointRow('Mid S1/S2', mS2, context),
-              _theDivider(context),
-              _levelRow('S2', data.s2, const Color(0xFF16A34A)),
-              _theDivider(context),
-              _midpointRow('Mid S2/S3', mS3, context),
-              _theDivider(context),
-              _levelRow('S3', data.s3, const Color(0xFF16A34A)),
-              _theDivider(context),
-              _midpointRow('Mid S3/S4', mS4, context),
-              _theDivider(context),
-              _levelRow('S4', data.s4, const Color(0xFF16A34A)),
+              const Text(
+                'REKOMENDASI ACTION',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                rec,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                ),
+              ),
             ],
           ),
         ),
@@ -645,81 +557,6 @@ class _PivotPointViewState extends State<_PivotPointView>
       ],
     );
   }
-
-  Widget _levelRow(
-    String label,
-    double value,
-    Color color, {
-    bool isPivot = false,
-  }) {
-    return Container(
-      color: isPivot
-          ? (context.isDarkMode
-                ? Colors.white.withAlpha(8)
-                : const Color(0xFFF8FAFC))
-          : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isPivot ? FontWeight.w800 : FontWeight.w600,
-                color: color,
-              ),
-            ),
-            Text(
-              formatNumber(value),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _midpointRow(String label, double value, BuildContext context) {
-    return Container(
-      color: context.isDarkMode
-          ? Colors.white.withAlpha(5)
-          : const Color(0xFFF8FAFC).withAlpha(150),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: context.textMuted,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-            Text(
-              formatNumber(value),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: context.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _theDivider(BuildContext context) =>
-      Divider(height: 0, color: context.dividerColor);
 }
 
 class _BackButton extends StatelessWidget {
