@@ -173,9 +173,9 @@ class GoldCalculatorResultView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'KEUNTUNGAN BERSIH',
-                            style: TextStyle(
+                          Text(
+                            isPos ? 'KEUNTUNGAN BERSIH' : 'KERUGIAN',
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
