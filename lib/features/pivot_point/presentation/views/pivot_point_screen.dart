@@ -34,6 +34,7 @@ class _PivotPointViewState extends State<_PivotPointView>
   late TextEditingController closeController;
   late TextEditingController opController;
   late TabController _tabController;
+  late ScrollController _mainScrollController;
   bool _isManual = true;
 
   PivotPointViewModel? _viewModelRef;
@@ -47,6 +48,7 @@ class _PivotPointViewState extends State<_PivotPointView>
     lowController = TextEditingController();
     closeController = TextEditingController();
     opController = TextEditingController();
+    _mainScrollController = ScrollController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _viewModelRef = context.read<PivotPointViewModel>();
@@ -84,6 +86,7 @@ class _PivotPointViewState extends State<_PivotPointView>
     closeController.dispose();
     opController.dispose();
     _tabController.dispose();
+    _mainScrollController.dispose();
     super.dispose();
   }
 
@@ -91,6 +94,20 @@ class _PivotPointViewState extends State<_PivotPointView>
     if (rec == 'BUY') return const Color(0xFF16A34A);
     if (rec == 'SELL') return const Color(0xFFDC2626);
     return const Color(0xFF64748B);
+  }
+
+  // ── FUNGSI AUTO SCROLL KE BAWAH ──
+  void _scrollToBottom() {
+    if (_mainScrollController.hasClients) {
+      // Jeda 100ms agar widget hasil render dulu, baru di-scroll
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _mainScrollController.animateTo(
+          _mainScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOut,
+        );
+      });
+    }
   }
 
   Future<void> _calculate(PivotPointViewModel viewModel) async {
@@ -112,6 +129,9 @@ class _PivotPointViewState extends State<_PivotPointView>
           backgroundColor: AppColors.negative,
         ),
       );
+    } else {
+      // Panggil scroll jika perhitungan sukses tanpa error
+      _scrollToBottom();
     }
   }
 
@@ -164,6 +184,7 @@ class _PivotPointViewState extends State<_PivotPointView>
 
             Expanded(
               child: SingleChildScrollView(
+                controller: _mainScrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,7 +242,6 @@ class _PivotPointViewState extends State<_PivotPointView>
                     ),
                     const SizedBox(height: 24),
 
-                    // NAVBAR TABBAR YANG UDAH DI-FIX DARK MODE
                     Container(
                       height: 44,
                       padding: const EdgeInsets.all(4),
@@ -293,7 +313,11 @@ class _PivotPointViewState extends State<_PivotPointView>
                             isFetchingMore: viewModel.isFetchingMore,
                             hasMoreData: viewModel.hasMoreData,
                             onChangeSymbol: viewModel.changeNewsmakerSymbol,
-                            onCalculate: viewModel.calculateFromHistory,
+                            // Mencegat onCalculate dari tabel untuk memanggil _scrollToBottom
+                            onCalculate: (data) {
+                              viewModel.calculateFromHistory(data);
+                              _scrollToBottom();
+                            },
                             onNextPage: viewModel.nextPage,
                             onPrevPage: viewModel.previousPage,
                           ),
@@ -385,7 +409,6 @@ class _PivotPointViewState extends State<_PivotPointView>
     );
   }
 
-  // INPUT FIELD YANG UDAH DI-FIX DARK MODE (Garis Bawah)
   Widget _inputField({
     required String label,
     required String hint,

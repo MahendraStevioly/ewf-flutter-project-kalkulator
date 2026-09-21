@@ -32,6 +32,7 @@ class _NestViewState extends State<_NestView>
   late TextEditingController closeController;
   late TextEditingController opController;
   late TabController _tabController;
+  late ScrollController _mainScrollController;
   bool _isManual = true;
 
   NestViewModel? _viewModelRef;
@@ -43,6 +44,7 @@ class _NestViewState extends State<_NestView>
 
     closeController = TextEditingController();
     opController = TextEditingController();
+    _mainScrollController = ScrollController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _viewModelRef = context.read<NestViewModel>();
@@ -76,6 +78,7 @@ class _NestViewState extends State<_NestView>
     closeController.dispose();
     opController.dispose();
     _tabController.dispose();
+    _mainScrollController.dispose();
     super.dispose();
   }
 
@@ -83,6 +86,19 @@ class _NestViewState extends State<_NestView>
     if (rec == 'BUY') return const Color(0xFF16A34A);
     if (rec == 'SELL') return const Color(0xFFDC2626);
     return const Color(0xFF64748B);
+  }
+
+  // ── FUNGSI AUTO SCROLL KE BAWAH ──
+  void _scrollToBottom() {
+    if (_mainScrollController.hasClients) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _mainScrollController.animateTo(
+          _mainScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOut,
+        );
+      });
+    }
   }
 
   Future<void> _calculate(NestViewModel viewModel) async {
@@ -102,6 +118,9 @@ class _NestViewState extends State<_NestView>
           backgroundColor: AppColors.negative,
         ),
       );
+    } else {
+      // Panggil scroll jika perhitungan sukses tanpa error
+      _scrollToBottom();
     }
   }
 
@@ -145,6 +164,7 @@ class _NestViewState extends State<_NestView>
 
             Expanded(
               child: SingleChildScrollView(
+                controller: _mainScrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,7 +303,6 @@ class _NestViewState extends State<_NestView>
                             isFetchingMore: viewModel.isFetchingMore,
                             hasMoreData: viewModel.hasMoreData,
                             onChangeSymbol: viewModel.changeNewsmakerSymbol,
-                            onCalculate: viewModel.calculateFromHistory,
                             onNextPage: viewModel.nextPage,
                             onPrevPage: viewModel.previousPage,
                           ),
