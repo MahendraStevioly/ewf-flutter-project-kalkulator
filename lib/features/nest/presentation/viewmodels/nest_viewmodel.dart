@@ -308,12 +308,4 @@ class NestViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  void calculateFromHistory(MarketData data) {
-    calculateNewsmaker(
-      symbolInput: '$_selectedNewsmakerSymbol (${data.date})',
-      open: data.open,
-      close: data.close,
-    );
-  }
 }

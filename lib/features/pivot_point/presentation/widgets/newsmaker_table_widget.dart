@@ -5,7 +5,6 @@ import '../../../../core/theme/app_theme.dart';
 
 class NewsmakerTableWidget extends StatefulWidget {
   // ── PARAMETER DINAMIS ──
-  // Dengan ini, tabel bisa menerima data dari ViewModel APAPUN (Pivot / Nest)
   final List<MarketData> histories;
   final String selectedSymbol;
   final bool isLoading;
@@ -13,7 +12,10 @@ class NewsmakerTableWidget extends StatefulWidget {
   final bool isFetchingMore;
   final bool hasMoreData;
   final void Function(String) onChangeSymbol;
-  final void Function(MarketData) onCalculate;
+  
+  // Dibuat nullable agar kolom Aksi bisa disembunyikan (misal: di halaman Nest)
+  final void Function(MarketData)? onCalculate; 
+  
   final VoidCallback onNextPage;
   final VoidCallback onPrevPage;
 
@@ -26,7 +28,7 @@ class NewsmakerTableWidget extends StatefulWidget {
     required this.isFetchingMore,
     required this.hasMoreData,
     required this.onChangeSymbol,
-    required this.onCalculate,
+    this.onCalculate, // Hapus 'required'
     required this.onNextPage,
     required this.onPrevPage,
   });
@@ -50,7 +52,6 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
     super.dispose();
   }
 
-  // Tambahkan BuildContext sebagai parameter untuk akses tema
   Widget _buildHeaderCell(String text, BuildContext context, {double width = 80}) {
     return Container(
       width: width,
@@ -66,7 +67,6 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
     );
   }
 
-  // Tambahkan BuildContext sebagai parameter untuk akses tema
   Widget _buildDataCell(String text, BuildContext context, {double width = 80, bool isBold = false}) {
     return Container(
       width: width,
@@ -76,7 +76,7 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
         text,
         style: TextStyle(
           fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-          color: context.textPrimary, // Teks biasa maupun tebal pakai warna adaptif
+          color: context.textPrimary, 
         ),
       ),
     );
@@ -84,7 +84,6 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Daftar instrumen yang tersedia
     final symbols = ['Gold', 'Hang Seng', 'Nikkei'];
 
     return Column(
@@ -112,15 +111,15 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                   },
                   showCheckmark: false,
                   selectedColor: AppColors.primary,
-                  backgroundColor: context.chipBg, // Background dinamis
+                  backgroundColor: context.chipBg, 
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                     side: BorderSide(
-                      color: isSelected ? AppColors.primary : context.borderColor, // Border dinamis
+                      color: isSelected ? AppColors.primary : context.borderColor, 
                     ),
                   ),
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : context.textSecondary, // Teks dinamis
+                    color: isSelected ? Colors.white : context.textSecondary, 
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -147,11 +146,11 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: context.cardBg, // Card dinamis
+              color: context.cardBg, 
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: context.borderColor), // Border dinamis
+              border: Border.all(color: context.borderColor), 
               boxShadow: [
-                if (!context.isDarkMode) // Shadow hanya tampil di light mode
+                if (!context.isDarkMode) 
                   BoxShadow(
                     color: Colors.black.withAlpha(8),
                     blurRadius: 12,
@@ -171,7 +170,7 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                     children: [
                       Container(
                         color: context.isDarkMode 
-                            ? Colors.white.withAlpha(10) // Gelap transparan untuk dark mode
+                            ? Colors.white.withAlpha(10) 
                             : const Color(0xFFF8FAFC),
                         child: Row(
                           children: [
@@ -180,7 +179,9 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                             _buildHeaderCell('Low', context, width: 85),
                             _buildHeaderCell('Close', context, width: 85),
                             _buildHeaderCell('Open', context, width: 85),
-                            _buildHeaderCell('Aksi', context, width: 110),
+                            // Sembunyikan Header Aksi jika onCalculate null
+                            if (widget.onCalculate != null)
+                              _buildHeaderCell('Aksi', context, width: 110),
                           ],
                         ),
                       ),
@@ -196,7 +197,7 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                             return Container(
                               decoration: BoxDecoration(
                                 border: Border(
-                                  bottom: BorderSide(color: context.dividerColor), // Divider dinamis
+                                  bottom: BorderSide(color: context.dividerColor), 
                                 ),
                               ),
                               child: Row(
@@ -206,29 +207,32 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                                   _buildDataCell(data.low.toStringAsFixed(2), context, width: 85),
                                   _buildDataCell(data.close.toStringAsFixed(2), context, width: 85),
                                   _buildDataCell(data.open.toStringAsFixed(2), context, width: 85),
-                                  Container(
-                                    width: 110,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    child: ElevatedButton(
-                                      onPressed: () => widget.onCalculate(data),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.primary,
-                                        elevation: 0,
-                                        padding: const EdgeInsets.symmetric(vertical: 8),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                  
+                                  // Sembunyikan Tombol Hitung jika onCalculate null
+                                  if (widget.onCalculate != null)
+                                    Container(
+                                      width: 110,
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      child: ElevatedButton(
+                                        onPressed: () => widget.onCalculate!(data),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.primary,
+                                          elevation: 0,
+                                          padding: const EdgeInsets.symmetric(vertical: 8),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
                                         ),
-                                      ),
-                                      child: const Text(
-                                        'Hitung',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                        child: const Text(
+                                          'Hitung',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
                                 ],
                               ),
                             );
