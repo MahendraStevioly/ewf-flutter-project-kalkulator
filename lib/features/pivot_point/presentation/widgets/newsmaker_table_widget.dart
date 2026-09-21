@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entities/market_data.dart';
 import '../viewmodels/pivot_point_viewmodel.dart';
+import '../../../../core/theme/app_colors.dart'; // <-- Import warna utama
+import '../../../../core/theme/app_theme.dart'; // <-- Import extension dark mode
 
 class NewsmakerTableWidget extends StatefulWidget {
   const NewsmakerTableWidget({super.key});
@@ -25,26 +27,34 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
     super.dispose();
   }
 
-  Widget _buildHeaderCell(String text, {double width = 80}) {
-    return Container(
-      width: width,
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-      child: Text(text, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
-    );
-  }
-
-  Widget _buildDataCell(String text, {double width = 80, bool isBold = false}) {
+  // Tambahkan BuildContext sebagai parameter untuk akses tema
+  Widget _buildHeaderCell(String text, BuildContext context, {double width = 80}) {
     return Container(
       width: width,
       alignment: Alignment.centerLeft,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       child: Text(
-        text, 
+        text,
         style: TextStyle(
-          fontWeight: isBold ? FontWeight.w700 : FontWeight.w500, 
-          color: isBold ? const Color(0xFF0F172A) : null
-        )
+          fontWeight: FontWeight.w700,
+          color: context.textSecondary,
+        ),
+      ),
+    );
+  }
+
+  // Tambahkan BuildContext sebagai parameter untuk akses tema
+  Widget _buildDataCell(String text, BuildContext context, {double width = 80, bool isBold = false}) {
+    return Container(
+      width: width,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+          color: context.textPrimary, // Teks biasa maupun tebal pakai warna adaptif
+        ),
       ),
     );
   }
@@ -53,7 +63,7 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
   Widget build(BuildContext context) {
     final viewModel = context.watch<PivotPointViewModel>();
     final histories = viewModel.newsmakerHistories;
-    
+
     // Daftar instrumen yang tersedia
     final symbols = ['Gold', 'Hang Seng', 'Nikkei'];
 
@@ -82,16 +92,16 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                     }
                   },
                   showCheckmark: false,
-                  selectedColor: const Color(0xFFF7941D),
-                  backgroundColor: Colors.white,
+                  selectedColor: AppColors.primary,
+                  backgroundColor: context.chipBg, // Background dinamis
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                     side: BorderSide(
-                      color: isSelected ? const Color(0xFFF7941D) : const Color(0xFFE2E8F0),
+                      color: isSelected ? AppColors.primary : context.borderColor, // Border dinamis
                     ),
                   ),
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : const Color(0xFF64748B),
+                    color: isSelected ? Colors.white : context.textSecondary, // Teks dinamis
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -100,30 +110,34 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
             }).toList(),
           ),
         ),
-        
+
         const SizedBox(height: 16),
 
         // ── TABEL DATA HISTORIS (PAGINATED) ──
         if (histories.isEmpty && !viewModel.isLoading)
-          const Center(
+          Center(
             child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: Text('Belum ada data historis'),
+              padding: const EdgeInsets.all(20.0),
+              child: Text(
+                'Belum ada data historis',
+                style: TextStyle(color: context.textSecondary),
+              ),
             ),
           )
         else
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardBg, // Card dinamis
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: context.borderColor), // Border dinamis
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(8),
-                  blurRadius: 12,
-                  offset: const Offset(0, 3),
-                ),
+                if (!context.isDarkMode) // Shadow hanya tampil di light mode
+                  BoxShadow(
+                    color: Colors.black.withAlpha(8),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  ),
               ],
             ),
             child: ClipRRect(
@@ -132,26 +146,28 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 child: SizedBox(
-                  width: 650, // Lebar fixed minimum agar list view bisa scroll vertikal tanpa terpotong layout horizontal
+                  width: 650,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Header Table Custom
                       Container(
-                        color: const Color(0xFFF8FAFC),
+                        color: context.isDarkMode 
+                            ? Colors.white.withAlpha(10) // Gelap transparan untuk dark mode
+                            : const Color(0xFFF8FAFC),
                         child: Row(
                           children: [
-                            _buildHeaderCell('Tanggal', width: 120),
-                            _buildHeaderCell('High', width: 85),
-                            _buildHeaderCell('Low', width: 85),
-                            _buildHeaderCell('Close', width: 85),
-                            _buildHeaderCell('Open', width: 85),
-                            _buildHeaderCell('Aksi', width: 110),
+                            _buildHeaderCell('Tanggal', context, width: 120),
+                            _buildHeaderCell('High', context, width: 85),
+                            _buildHeaderCell('Low', context, width: 85),
+                            _buildHeaderCell('Close', context, width: 85),
+                            _buildHeaderCell('Open', context, width: 85),
+                            _buildHeaderCell('Aksi', context, width: 110),
                           ],
                         ),
                       ),
-                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                      
+                      Divider(height: 1, color: context.dividerColor),
+
                       // Body Table dengan ListView.builder
                       Container(
                         constraints: const BoxConstraints(maxHeight: 400),
@@ -161,28 +177,39 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                           itemBuilder: (context, index) {
                             final data = histories[index];
                             return Container(
-                              decoration: const BoxDecoration(
-                                border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(color: context.dividerColor), // Divider dinamis
+                                ),
                               ),
                               child: Row(
                                 children: [
-                                  _buildDataCell(data.date, width: 120, isBold: true),
-                                  _buildDataCell(data.high.toStringAsFixed(2), width: 85),
-                                  _buildDataCell(data.low.toStringAsFixed(2), width: 85),
-                                  _buildDataCell(data.close.toStringAsFixed(2), width: 85),
-                                  _buildDataCell(data.open.toStringAsFixed(2), width: 85),
+                                  _buildDataCell(data.date, context, width: 120, isBold: true),
+                                  _buildDataCell(data.high.toStringAsFixed(2), context, width: 85),
+                                  _buildDataCell(data.low.toStringAsFixed(2), context, width: 85),
+                                  _buildDataCell(data.close.toStringAsFixed(2), context, width: 85),
+                                  _buildDataCell(data.open.toStringAsFixed(2), context, width: 85),
                                   Container(
                                     width: 110,
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     child: ElevatedButton(
                                       onPressed: () => viewModel.calculateFromHistory(data),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFFF7941D),
+                                        backgroundColor: AppColors.primary,
                                         elevation: 0,
                                         padding: const EdgeInsets.symmetric(vertical: 8),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
                                       ),
-                                      child: const Text('Hitung', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                                      child: const Text(
+                                        'Hitung',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -197,39 +224,43 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
               ),
             ),
           ),
-          
+
         if (histories.isNotEmpty) ...[
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               TextButton.icon(
-                onPressed: viewModel.currentPage > 1 && !viewModel.isFetchingMore 
-                    ? () => viewModel.previousPage() 
+                onPressed: viewModel.currentPage > 1 && !viewModel.isFetchingMore
+                    ? () => viewModel.previousPage()
                     : null,
                 icon: const Icon(Icons.chevron_left, size: 20),
                 label: const Text('Sebelumnya', style: TextStyle(fontWeight: FontWeight.bold)),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFFF7941D),
+                  foregroundColor: AppColors.primary,
                   disabledForegroundColor: Colors.grey,
                 ),
               ),
               if (viewModel.isFetchingMore)
                 const SizedBox(
-                  width: 20, height: 20,
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               else
                 Text(
                   'Halaman ${viewModel.currentPage}',
-                  style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: context.textSecondary, // Teks halaman dinamis
+                  ),
                 ),
               TextButton(
-                onPressed: viewModel.hasMoreData && !viewModel.isFetchingMore 
-                    ? () => viewModel.nextPage() 
+                onPressed: viewModel.hasMoreData && !viewModel.isFetchingMore
+                    ? () => viewModel.nextPage()
                     : null,
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFFF7941D),
+                  foregroundColor: AppColors.primary,
                   disabledForegroundColor: Colors.grey,
                 ),
                 child: Row(

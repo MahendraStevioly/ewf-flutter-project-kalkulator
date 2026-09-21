@@ -130,8 +130,7 @@ class _DashboardViewState extends State<_DashboardView> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  _buildPriceCard(context, viewModel),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 24), // Spacing pengganti Live Gold yang dihapus
                   _buildSectionHeader(
                     context,
                     title: 'Berita Terkini',
@@ -192,7 +191,7 @@ class _DashboardViewState extends State<_DashboardView> {
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
+          color: const Color(0xFF1E293B), // Tetap dipertahankan karena desain header solid navy
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
@@ -316,110 +315,6 @@ class _DashboardViewState extends State<_DashboardView> {
     );
   }
 
-  Widget _buildPriceCard(BuildContext context, DashboardViewModel viewModel) {
-    return Container(
-      margin: const EdgeInsets.only(top: 20),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      decoration: BoxDecoration(
-        color: context.cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.borderColor),
-        boxShadow: [
-          if (!context.isDarkMode)
-            BoxShadow(
-              color: Colors.black.withAlpha(12),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'XAU/USD',
-                    style: TextStyle(
-                      color: context.textPrimary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: context.isDarkMode
-                          ? const Color(0xFF16A34A).withAlpha(40)
-                          : const Color(0xFFDCFCE7),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.arrow_upward_rounded,
-                          size: 12,
-                          color: Color(0xFF16A34A),
-                        ),
-                        SizedBox(width: 2),
-                        Text(
-                          '+0.30%',
-                          style: TextStyle(
-                            color: Color(0xFF16A34A),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                'Diperbarui ${viewModel.lastUpdated}',
-                style: TextStyle(
-                  color: context.textMuted,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                '\$${viewModel.liveGoldPrice}',
-                style: TextStyle(
-                  color: context.textPrimary,
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                '+12.40',
-                style: TextStyle(
-                  color: Color(0xFF16A34A),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSectionHeader(
     BuildContext context, {
     required String title,
@@ -472,8 +367,8 @@ class _DashboardViewState extends State<_DashboardView> {
           child: Text(
             viewModel.newsError ?? 'Tidak ada berita saat ini',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.gray,
+            style: TextStyle(
+              color: context.textSecondary,
               fontSize: 13,
             ),
           ),
@@ -487,9 +382,7 @@ class _DashboardViewState extends State<_DashboardView> {
       height: 208,
       child: PageView.builder(
         controller: _newsPageController,
-        // Dihapus itemCount-nya agar infinity scroll berfungsi
         itemBuilder: (context, index) {
-          // Logika Modulo untuk looping data 
           final realIndex = index % newsList.length;
           final item = newsList[realIndex];
 
@@ -504,12 +397,12 @@ class _DashboardViewState extends State<_DashboardView> {
     );
   }
 
-Widget _buildNewsShimmer() { 
+  Widget _buildNewsShimmer() { 
     return Container(
       width: 220,
       margin: const EdgeInsets.only(right: 14),
       decoration: BoxDecoration(
-        color: context.cardBg, // <--- Cukup ganti warnanya pake ini
+        color: context.cardBg,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -518,7 +411,7 @@ Widget _buildNewsShimmer() {
           Container(
             height: 120,
             decoration: BoxDecoration(
-              color: context.chipBg, // <--- Ganti ini juga
+              color: context.chipBg,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
             ),
           ),
@@ -529,12 +422,12 @@ Widget _buildNewsShimmer() {
               children: [
                 SizedBox(
                   height: 8,
-                  child: ColoredBox(color: context.chipBg), // <--- Ganti ini
+                  child: ColoredBox(color: context.chipBg),
                 ),
                 const SizedBox(height: 6),
                 SizedBox(
                   height: 12,
-                  child: ColoredBox(color: context.chipBg), // <--- Dan ini
+                  child: ColoredBox(color: context.chipBg),
                 ),
               ],
             ),
@@ -545,6 +438,11 @@ Widget _buildNewsShimmer() {
   }
 
   Widget _buildFeatureList(BuildContext context) {
+    // Definisi warna bg icon yang dinamis
+    final bgIconColor = context.isDarkMode 
+        ? AppColors.primary.withAlpha(35) 
+        : const Color(0xFFFFF3E0);
+
     return Container(
       decoration: BoxDecoration(
         color: context.cardBg,
@@ -561,16 +459,16 @@ Widget _buildNewsShimmer() {
       ),
       child: Column(
         children: [
-          // ── Item 1: Kalkulator Emas Fisik (tetap sama) ──
+          // ── Item 1: Kalkulator Emas Fisik ──
           _FeatureListTile(
             icon: Icons.diamond_outlined,
             title: 'Kalkulator Emas Fisik',
             subtitle: 'Hitung estimasi keuntungan emas fisik',
             iconColor: AppColors.primary,
-            iconBg: const Color(0xFFFFF3E0),
+            iconBg: bgIconColor,
             onTap: () => Navigator.of(context).pushNamed(AppRoutes.goldCalculator),
           ),
-          const Divider(height: 0, indent: 64, color: Color(0xFFF1F5F9)),
+          Divider(height: 0, indent: 64, color: context.dividerColor),
 
           // ── Item 2: Konsep Transaksi (Accordion) ──
           Theme(
@@ -581,39 +479,42 @@ Widget _buildNewsShimmer() {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3E0),
+                  color: bgIconColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.candlestick_chart_rounded, color: AppColors.primary, size: 22),
               ),
-              title: const Text(
+              title: Text(
                 'Konsep Transaksi',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: context.textPrimary,
                 ),
               ),
-              subtitle: const Text(
+              subtitle: Text(
                 'Pilih metode analisa & kalkulasi',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF64748B),
+                  color: context.textSecondary,
                 ),
               ),
               children: [
                 Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF8FAFC),
+                  // ── Area dalam accordion dibikin sedikit beda warnanya ──
+                  decoration: BoxDecoration(
+                    color: context.isDarkMode ? Colors.white.withAlpha(5) : const Color(0xFFF8FAFC),
                   ),
                   child: Column(
                     children: [
-                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      Divider(height: 1, color: context.dividerColor),
+                      
+                      // ── Sub-menu 1: Nest ──
                       Material(
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: () {
-                            // TODO: Navigasi ke Nest
+                            // TODO: Navigasi ke Nest (ditunda dulu)
                             print('Navigasi ke Nest');
                           },
                           child: Padding(
@@ -623,37 +524,40 @@ Widget _buildNewsShimmer() {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: context.cardBg, // Diubah jadi dinamis
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    border: Border.all(color: context.borderColor), // Diubah jadi dinamis
                                     boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withAlpha(4),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
+                                      if (!context.isDarkMode)
+                                        BoxShadow(
+                                          color: Colors.black.withAlpha(4),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
                                     ],
                                   ),
                                   child: const Icon(Icons.hub_outlined, size: 16, color: AppColors.primary),
                                 ),
                                 const SizedBox(width: 14),
-                                const Expanded(
+                                Expanded(
                                   child: Text(
                                     'Nest',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF334155),
+                                      color: context.textPrimary, // Diubah jadi dinamis
                                     ),
                                   ),
                                 ),
-                                const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 18),
+                                Icon(Icons.chevron_right, color: context.textMuted, size: 18),
                               ],
                             ),
                           ),
                         ),
                       ),
-                      const Divider(height: 1, indent: 72, color: Color(0xFFE2E8F0)),
+                      Divider(height: 1, indent: 72, color: context.dividerColor),
+                      
+                      // ── Sub-menu 2: Pivot Point ──
                       Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -665,31 +569,32 @@ Widget _buildNewsShimmer() {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: context.cardBg, // Diubah jadi dinamis
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    border: Border.all(color: context.borderColor), // Diubah jadi dinamis
                                     boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withAlpha(4),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
+                                      if (!context.isDarkMode)
+                                        BoxShadow(
+                                          color: Colors.black.withAlpha(4),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
                                     ],
                                   ),
                                   child: const Icon(Icons.show_chart_rounded, size: 16, color: AppColors.primary),
                                 ),
                                 const SizedBox(width: 14),
-                                const Expanded(
+                                Expanded(
                                   child: Text(
                                     'Pivot Point',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF334155),
+                                      color: context.textPrimary, // Diubah jadi dinamis
                                     ),
                                   ),
                                 ),
-                                const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 18),
+                                Icon(Icons.chevron_right, color: context.textMuted, size: 18),
                               ],
                             ),
                           ),
@@ -702,15 +607,15 @@ Widget _buildNewsShimmer() {
               ],
             ),
           ),
-          const Divider(height: 0, indent: 64, color: Color(0xFFF1F5F9)),
+          Divider(height: 0, indent: 64, color: context.dividerColor),
 
-          // ── Item 3: Grafik Harga Komoditas (tetap sama) ──
+          // ── Item 3: Grafik Harga Komoditas ──
           _FeatureListTile(
             icon: Icons.bar_chart_rounded,
             title: 'Grafik Harga Komoditas',
             subtitle: 'Chart live dari TradingView',
             iconColor: AppColors.primary,
-            iconBg: const Color(0xFFFFF3E0),
+            iconBg: bgIconColor,
             onTap: () => Navigator.of(context).pushNamed(AppRoutes.commodityChart),
           ),
         ],
@@ -881,7 +786,7 @@ Widget _buildNewsShimmer() {
     required VoidCallback onTap,
   }) {
     final Color valueColor = isNeutral
-        ? const Color(0xFF64748B)
+        ? context.textSecondary
         : isPositive
         ? const Color(0xFF16A34A)
         : const Color(0xFFDC2626);
