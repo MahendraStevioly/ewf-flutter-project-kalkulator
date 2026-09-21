@@ -1,5 +1,7 @@
 /// Model & Service untuk menyimpan riwayat perhitungan
 /// Menggunakan in-memory singleton selama sesi aplikasi berjalan
+import 'package:kalkulator_pivot/core/database/database_helper.dart';
+import 'package:flutter/foundation.dart';
 
 enum HistoryType { gold, pivot }
 
@@ -73,6 +75,32 @@ class PivotHistoryEntry {
   final String recommendation;
 }
 
+class NestHistoryEntry {
+  final String id;
+  final DateTime timestamp;
+  final double close;
+  final double openingPrice;
+  final String recommendation;
+
+  NestHistoryEntry({
+    required this.id,
+    required this.timestamp,
+    required this.close,
+    required this.openingPrice,
+    required this.recommendation,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'timestamp': timestamp.toIso8601String(),
+      'close': close,
+      'openingPrice': openingPrice,
+      'recommendation': recommendation,
+    };
+  }
+}
+
 class HistoryService {
   HistoryService._();
   static final HistoryService instance = HistoryService._();
@@ -109,5 +137,14 @@ class HistoryService {
 
     combined.sort((a, b) => (b['timestamp'] as DateTime).compareTo(a['timestamp'] as DateTime));
     return combined.take(limit).toList();
+  }
+
+  Future<void> addNest(NestHistoryEntry entry) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      await db.insert('nest_history', entry.toMap());
+    } catch (e) {
+      if (kDebugMode) print('Gagal menyimpan riwayat Nest: $e');
+    }
   }
 }

@@ -1,12 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../domain/entities/market_data.dart';
-import '../viewmodels/pivot_point_viewmodel.dart';
-import '../../../../core/theme/app_colors.dart'; // <-- Import warna utama
-import '../../../../core/theme/app_theme.dart'; // <-- Import extension dark mode
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class NewsmakerTableWidget extends StatefulWidget {
-  const NewsmakerTableWidget({super.key});
+  // ── PARAMETER DINAMIS ──
+  // Dengan ini, tabel bisa menerima data dari ViewModel APAPUN (Pivot / Nest)
+  final List<MarketData> histories;
+  final String selectedSymbol;
+  final bool isLoading;
+  final int currentPage;
+  final bool isFetchingMore;
+  final bool hasMoreData;
+  final void Function(String) onChangeSymbol;
+  final void Function(MarketData) onCalculate;
+  final VoidCallback onNextPage;
+  final VoidCallback onPrevPage;
+
+  const NewsmakerTableWidget({
+    super.key,
+    required this.histories,
+    required this.selectedSymbol,
+    required this.isLoading,
+    required this.currentPage,
+    required this.isFetchingMore,
+    required this.hasMoreData,
+    required this.onChangeSymbol,
+    required this.onCalculate,
+    required this.onNextPage,
+    required this.onPrevPage,
+  });
 
   @override
   State<NewsmakerTableWidget> createState() => _NewsmakerTableWidgetState();
@@ -61,9 +84,6 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<PivotPointViewModel>();
-    final histories = viewModel.newsmakerHistories;
-
     // Daftar instrumen yang tersedia
     final symbols = ['Gold', 'Hang Seng', 'Nikkei'];
 
@@ -76,7 +96,7 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
           physics: const BouncingScrollPhysics(),
           child: Row(
             children: symbols.map((sym) {
-              final isSelected = viewModel.selectedNewsmakerSymbol == sym;
+              final isSelected = widget.selectedSymbol == sym;
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: ChoiceChip(
@@ -84,8 +104,7 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                   selected: isSelected,
                   onSelected: (selected) {
                     if (selected) {
-                      viewModel.changeNewsmakerSymbol(sym);
-                      // Scroll list ke atas saat ganti instrumen
+                      widget.onChangeSymbol(sym);
                       if (_scrollController.hasClients) {
                         _scrollController.jumpTo(0);
                       }
@@ -114,7 +133,7 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
         const SizedBox(height: 16),
 
         // ── TABEL DATA HISTORIS (PAGINATED) ──
-        if (histories.isEmpty && !viewModel.isLoading)
+        if (widget.histories.isEmpty && !widget.isLoading)
           Center(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -146,11 +165,10 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 child: SizedBox(
-                  width: 650,
+                  width: 650, 
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Header Table Custom
                       Container(
                         color: context.isDarkMode 
                             ? Colors.white.withAlpha(10) // Gelap transparan untuk dark mode
@@ -166,16 +184,15 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                           ],
                         ),
                       ),
-                      Divider(height: 1, color: context.dividerColor),
-
-                      // Body Table dengan ListView.builder
+                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                      
                       Container(
                         constraints: const BoxConstraints(maxHeight: 400),
                         child: ListView.builder(
                           controller: _scrollController,
-                          itemCount: histories.length,
+                          itemCount: widget.histories.length,
                           itemBuilder: (context, index) {
-                            final data = histories[index];
+                            final data = widget.histories[index];
                             return Container(
                               decoration: BoxDecoration(
                                 border: Border(
@@ -193,7 +210,7 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                                     width: 110,
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     child: ElevatedButton(
-                                      onPressed: () => viewModel.calculateFromHistory(data),
+                                      onPressed: () => widget.onCalculate(data),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppColors.primary,
                                         elevation: 0,
@@ -224,15 +241,15 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
               ),
             ),
           ),
-
-        if (histories.isNotEmpty) ...[
+          
+        if (widget.histories.isNotEmpty) ...[
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               TextButton.icon(
-                onPressed: viewModel.currentPage > 1 && !viewModel.isFetchingMore
-                    ? () => viewModel.previousPage()
+                onPressed: widget.currentPage > 1 && !widget.isFetchingMore 
+                    ? widget.onPrevPage 
                     : null,
                 icon: const Icon(Icons.chevron_left, size: 20),
                 label: const Text('Sebelumnya', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -241,7 +258,7 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                   disabledForegroundColor: Colors.grey,
                 ),
               ),
-              if (viewModel.isFetchingMore)
+              if (widget.isFetchingMore)
                 const SizedBox(
                   width: 20,
                   height: 20,
@@ -249,15 +266,12 @@ class _NewsmakerTableWidgetState extends State<NewsmakerTableWidget> {
                 )
               else
                 Text(
-                  'Halaman ${viewModel.currentPage}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: context.textSecondary, // Teks halaman dinamis
-                  ),
+                  'Halaman ${widget.currentPage}',
+                  style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
                 ),
               TextButton(
-                onPressed: viewModel.hasMoreData && !viewModel.isFetchingMore
-                    ? () => viewModel.nextPage()
+                onPressed: widget.hasMoreData && !widget.isFetchingMore 
+                    ? widget.onNextPage 
                     : null,
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.primary,
