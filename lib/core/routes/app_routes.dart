@@ -8,6 +8,7 @@ import '../../features/pivot_point/presentation/views/pivot_point_screen.dart';
 import '../../features/settings/presentation/views/settings_screen.dart';
 import '../../features/history/presentation/views/gold_detail_screen.dart';
 import '../../features/history/presentation/views/pivot_detail_screen.dart';
+import '../../features/history/presentation/views/nest_detail_screen.dart';
 import '../../features/commodity_chart/presentation/views/commodity_chart_screen.dart';
 
 class AppRoutes {
@@ -23,6 +24,7 @@ class AppRoutes {
   static const String goldDetail = '/gold-detail';
   static const String pivotDetail = '/pivot-detail';
   static const String commodityChart = '/commodity-chart';
+  static const String nestDetail = '/nest-detail';
 }
 
 class AppRouter {
@@ -64,6 +66,11 @@ class AppRouter {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const PivotDetailScreen(),
+        );
+      case AppRoutes.nestDetail:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const NestDetailScreen(),
         );
       case AppRoutes.commodityChart:
         return MaterialPageRoute(

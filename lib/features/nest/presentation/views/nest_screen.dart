@@ -246,14 +246,17 @@ class _NestViewState extends State<_NestView>
                       child: TabBar(
                         controller: _tabController,
                         indicator: BoxDecoration(
-                          color: context.cardBg,
+                          // 👇 Warna kotak aktif disesuaikan biar gak nyaru sama background
+                          color: context.isDarkMode ? AppColors.darkBorder : Colors.white,
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha(15),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
+                            // 👇 Shadow dimatikan pas mode gelap
+                            if (!context.isDarkMode)
+                              BoxShadow(
+                                color: Colors.black.withAlpha(15),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
                           ],
                         ),
                         indicatorSize: TabBarIndicatorSize.tab,
@@ -283,11 +286,13 @@ class _NestViewState extends State<_NestView>
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(color: context.borderColor),
                               boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withAlpha(8),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 3),
-                                ),
+                                // 👇 Shadow container input dimatikan pas mode gelap
+                                if (!context.isDarkMode)
+                                  BoxShadow(
+                                    color: Colors.black.withAlpha(8),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 3),
+                                  ),
                               ],
                             ),
                             child: Padding(
@@ -400,9 +405,10 @@ class _NestViewState extends State<_NestView>
           ),
         ),
         Container(
-          decoration: const BoxDecoration(
+          // 👇 const dihapus, border bottom pakai warna dinamis
+          decoration: BoxDecoration(
             border: Border(
-              bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+              bottom: BorderSide(color: context.borderColor, width: 1.5),
             ),
           ),
           child: TextField(

@@ -1,9 +1,7 @@
-/// Model & Service untuk menyimpan riwayat perhitungan
-/// Menggunakan in-memory singleton selama sesi aplikasi berjalan
 import 'package:kalkulator_pivot/core/database/database_helper.dart';
 import 'package:flutter/foundation.dart';
 
-enum HistoryType { gold, pivot }
+enum HistoryType { gold, pivot, nest }
 
 class GoldHistoryEntry {
   const GoldHistoryEntry({
@@ -107,9 +105,11 @@ class HistoryService {
 
   final List<GoldHistoryEntry> _goldHistory = [];
   final List<PivotHistoryEntry> _pivotHistory = [];
+  final List<NestHistoryEntry> _nestHistory = []; // 👇 Tambahan List Memory buat Nest
 
   List<GoldHistoryEntry> get goldHistory => List.unmodifiable(_goldHistory.reversed.toList());
   List<PivotHistoryEntry> get pivotHistory => List.unmodifiable(_pivotHistory.reversed.toList());
+  List<NestHistoryEntry> get nestHistory => List.unmodifiable(_nestHistory.reversed.toList()); // 👇 Tambahan Getter
 
   void addGold(GoldHistoryEntry entry) {
     _goldHistory.add(entry);
@@ -119,9 +119,21 @@ class HistoryService {
     _pivotHistory.add(entry);
   }
 
+  // 👇 Logika digabung: Simpan ke Memory DAN ke Database
+  Future<void> addNest(NestHistoryEntry entry) async {
+    _nestHistory.add(entry); // Biar lgsg update di UI Real-time
+    try {
+      final db = await DatabaseHelper.instance.database;
+      await db.insert('nest_history', entry.toMap());
+    } catch (e) {
+      if (kDebugMode) print('Gagal menyimpan riwayat Nest: $e');
+    }
+  }
+
   void clearAll() {
     _goldHistory.clear();
     _pivotHistory.clear();
+    _nestHistory.clear(); // 👇 Bersihin Nest juga
   }
 
   // Untuk dashboard: gabungan terbaru (3 item)
@@ -134,17 +146,12 @@ class HistoryService {
     for (final p in _pivotHistory) {
       combined.add({'type': HistoryType.pivot, 'entry': p, 'timestamp': p.timestamp});
     }
+    // 👇 Tambahin Nest ke dalam List Gabungan (biar muncul di Beranda)
+    for (final n in _nestHistory) {
+      combined.add({'type': HistoryType.nest, 'entry': n, 'timestamp': n.timestamp});
+    }
 
     combined.sort((a, b) => (b['timestamp'] as DateTime).compareTo(a['timestamp'] as DateTime));
     return combined.take(limit).toList();
-  }
-
-  Future<void> addNest(NestHistoryEntry entry) async {
-    try {
-      final db = await DatabaseHelper.instance.database;
-      await db.insert('nest_history', entry.toMap());
-    } catch (e) {
-      if (kDebugMode) print('Gagal menyimpan riwayat Nest: $e');
-    }
   }
 }
