@@ -128,7 +128,7 @@ class NewsDetailBottomSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text(
-                          'Berita Emas',
+                          'Komoditas', // <--- DARI BERITA EMAS DIGANTI JADI KOMODITAS
                           style: TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w700,
@@ -187,7 +187,8 @@ class NewsDetailBottomSheet extends StatelessWidget {
                   Text(
                     item.snippet.isNotEmpty
                         ? item.snippet
-                        : 'Simak perkembangan komoditas emas, sentimen makroekonomi, dan analisis teknikal harga emas spot global (XAU/USD) melalui tautan berita resmi.',
+                        // <--- TEKS FALLBACK BAWAAN DIGANTI AGAR LEBIH NETRAL
+                        : 'Buka tautan berita resmi untuk membaca artikel, analisis teknikal, dan sentimen pasar selengkapnya.',
                     style: TextStyle(
                       fontSize: 14,
                       color: context.textSecondary,
