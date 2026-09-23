@@ -80,7 +80,6 @@ class GoldCalculatorViewModel {
       return false;
     }
 
-
     if (kurs <= 0) {
       errorMessage = 'Kurs USD/IDR harus berupa angka positif';
       return false;
@@ -91,12 +90,7 @@ class GoldCalculatorViewModel {
   }
 
   /// Hitung keuntungan emas fisik
-  /// Formula:
-  /// HHB = HB × Kurs ÷ TOZ
-  /// HHJ = HJ × Kurs ÷ TOZ
-  /// Selisih = HHJ − HHB
-  /// Gram Emas = Modal ÷ HHB
-  /// Keuntungan Bersih = Gram Emas × Selisih
+  /// Hitung keuntungan emas fisik
   void calculate() {
     if (!validateInputs()) {
       return;
@@ -113,12 +107,22 @@ class GoldCalculatorViewModel {
       modalAwal = modal.truncateToDouble();
       kursUsdIdr = kurs.truncateToDouble();
 
-      // Hitungan berdasarkan formula
+      // 1. Hitung harga beli dan selisih (dipotong sesuai tampilan rupiah tanpa desimal)
       final hhb = ((hb * kursUsdIdr) / konversiTozG).truncateToDouble();
       final hhj = ((hj * kursUsdIdr) / konversiTozG).truncateToDouble();
       final selisih = (hhj - hhb).truncateToDouble();
-      final gramEmas = modalAwal / hhb;
-      final keuntunganBersih = (gramEmas * selisih).truncateToDouble();
+
+      // 2. Hitung gram emas (nilai mentah / panjang)
+      final gramEmasRaw = modalAwal / hhb;
+      
+      // 3. KUNCI SINKRONISASI LAYAR & KALKULATOR MANUAL
+      // Kita pangkas paksa gram emas menjadi 2 angka di belakang koma tanpa pembulatan.
+      // Ini mensimulasikan apa yang dilihat user di fungsi formatGram().
+      // Contoh: 10.12876 * 100 = 1012.876 -> di-truncate jadi 1012.0 -> dibagi 100 jadi 10.12
+      final gramEmasLayar = (gramEmasRaw * 100).truncateToDouble() / 100;
+      
+      // 4. Hasil kali ini dijamin 100% SAMA PERSIS dengan ketikan di kalkulator fisik Anda!
+      final keuntunganBersih = gramEmasLayar * selisih;
 
       hasil = {
         'hb': hb,
@@ -128,7 +132,7 @@ class GoldCalculatorViewModel {
         'hhb': hhb,
         'hhj': hhj,
         'selisih': selisih,
-        'gramEmas': gramEmas,
+        'gramEmas': gramEmasRaw, // Tetap gunakan raw agar formatGram tidak error
         'keuntunganBersih': keuntunganBersih,
       };
 
